@@ -1,0 +1,18 @@
+// src/App.jsx
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Homepage from './pages/Homepage.jsx';
+import Categories from './pages/Categories.jsx';
+import Navbar from './components/Navbar/Navbar.jsx';
+
+export default function App() {
+  return (
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/categories/:categoryId" element={<Categories />} />
+      </Routes>
+    </Router>
+  );
+}

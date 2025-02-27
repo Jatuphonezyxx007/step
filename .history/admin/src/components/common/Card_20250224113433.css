@@ -1,0 +1,41 @@
+/* Card.css */
+
+/* สไตล์พื้นฐานของ Card */
+.card {
+    position: relative;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  /* กำหนด container สำหรับภาพให้มีความสูงเท่ากัน */
+  .card-image {
+    width: 100%;
+    height: 12rem; /* กำหนดความสูงตายตัวที่ต้องการ */
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* ปรับให้ภาพเติมเต็ม container โดยครอปส่วนเกิน */
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* ทำให้ภาพเติมเต็ม container โดยครอปส่วนที่เกิน */
+    display: block;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* เอฟเฟกต์ zoom เมื่อ hover ที่ภาพ */
+  .card-image:hover img {
+    transform: scale(1.1);
+  }
+  
+  /* สไตล์สำหรับเนื้อหาของ Card */
+  .card-content {
+    flex: 1;
+    padding: 1rem;
+  }
+  

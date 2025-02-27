@@ -1,0 +1,41 @@
+/* Card.css */
+
+/* กำหนดสไตล์เบื้องต้นสำหรับ card */
+.card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem; /* Rounded corner */
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* เมื่อ hover ที่ Card ให้ zoom เล็กน้อย */
+  .card:hover {
+    transform: scale(1.02);
+  }
+  
+  /* สำหรับ container ของภาพ */
+  .card-image {
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* ภาพให้แสดงเต็มพื้นที่ */
+  .card-image img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* เมื่อ hover ที่ container ของภาพ ให้ภาพ zoom */
+  .card-image:hover img {
+    transform: scale(1.1);
+  }
+  
+  /* Optional: สไตล์สำหรับเนื้อหา */
+  .card-content {
+    padding: 0.75rem 0;
+  }
+  

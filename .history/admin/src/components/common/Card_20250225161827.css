@@ -1,0 +1,41 @@
+/* Card.css */
+.card {
+  position: relative;
+  border-radius: 0.5rem;
+  background-color: #fff; /* สามารถเปลี่ยนเป็น Tailwind dark mode ได้ใน Card.tsx */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* กำหนด container สำหรับภาพให้มีความสูงเท่ากันทุกใบ */
+.card-image {
+  width: 100%;
+  height: 12rem; /* ปรับความสูงที่ต้องการ เช่น 12rem หรือ 200px */
+  overflow: hidden;
+  position: relative;
+}
+
+/* ปรับให้ภาพเติมเต็ม container โดยครอปส่วนเกิน */
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease-in-out;
+}
+
+.card-image:hover img {
+  transform: scale(1.1);
+}
+
+/* ส่วนเนื้อหาของ Card ให้จัดวางอย่างสม่ำเสมอ */
+.card-content {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* จัดให้เนื้อหากระจายลงด้านบนและด้านล่าง */
+}

@@ -1,0 +1,38 @@
+/* Card.css */
+.card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem; /* Rounded corner */
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .card:hover {
+    transform: scale(1.02);
+  }
+  
+  .card-image {
+    width: 100%;
+    height: 12rem; /* ถ้าคุณต้องการกำหนดความสูงตายตัว */
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    /* เลือก cover หรือ contain */
+    object-fit: cover; 
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* เมื่อ hover ที่ภาพ ให้ zoom */
+  .card-image:hover img {
+    transform: scale(1.1);
+  }
+  
+  .card-content {
+    padding: 1rem;
+  }
+  

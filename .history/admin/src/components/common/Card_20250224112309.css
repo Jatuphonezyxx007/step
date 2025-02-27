@@ -1,0 +1,48 @@
+/* Card.css */
+
+/* สไตล์พื้นฐานของ Card */
+.card {
+    position: relative;
+    border-radius: 0.5rem; /* โค้งมุม */
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* หากต้องการให้ Card ขยายเล็กน้อยเมื่อ hover ทั้ง Card
+       สามารถเปิดใช้งานได้ */
+    /* transition: transform 0.3s ease-in-out; */
+  }
+  
+  .card:hover {
+    /* transform: scale(1.02); */
+  }
+  
+  .card-image {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* 
+    - width: 100% เพื่อให้ภาพเต็มความกว้างของ container
+    - height: auto เพื่อรักษาอัตราส่วนภาพ ไม่ครอปภาพ
+    - display: block เพื่อแก้ spacing ของ img ที่เป็น inline element
+    - transition: transform เพื่อทำเอฟเฟกต์ซูม
+  */
+  .card-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  /* 
+    เมื่อ hover ที่ .card-image (หรือที่ภาพเองก็ได้) 
+    ให้ภาพขยายขึ้น (zoom)
+  */
+  .card-image:hover img {
+    transform: scale(1.1);
+  }
+  
+  /* สไตล์ส่วนเนื้อหาของ Card */
+  .card-content {
+    padding: 1rem;
+  }
+  
