@@ -244,96 +244,16 @@
 
 
 
-// // src/components/form/form-elements/Dropzone.tsx
-// import React, { useState, useRef, useEffect, Suspense } from "react";
-// import { useDropzone } from "react-dropzone";
-// import { Canvas } from "@react-three/fiber";
-// import { OrbitControls, useGLTF } from "@react-three/drei";
-// import ComponentCard from "../../common/ComponentCard";
-
-// // Component สำหรับโหลดโมเดล 3D ด้วย useGLTF
-// function Model({ url }: { url: string }) {
-//   // useGLTF โหลดโมเดลจาก URL ที่ให้มา
-//   const { scene } = useGLTF(url);
-//   return <primitive object={scene} />;
-// }
-
-// export default function Dropzone3D() {
-//   const [modelUrl, setModelUrl] = useState<string | null>(null);
-//   const fileInputRef = useRef<HTMLInputElement>(null);
-
-//   // เมื่อผู้ใช้ลากหรือเลือกไฟล์
-//   const onDrop = (acceptedFiles: File[]) => {
-//     if (acceptedFiles && acceptedFiles.length > 0) {
-//       const file = acceptedFiles[0];
-//       const url = URL.createObjectURL(file);
-//       setModelUrl(url);
-//     }
-//   };
-
-//   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-//     onDrop,
-//     accept: {
-//       "model/gltf-binary": [".glb"],
-//       "model/gltf+json": [".gltf"],
-//     },
-//   });
-
-//   // เคลียร์ object URL เมื่อ component ถูก unmount
-//   useEffect(() => {
-//     return () => {
-//       if (modelUrl) {
-//         URL.revokeObjectURL(modelUrl);
-//       }
-//     };
-//   }, [modelUrl]);
-
-//   return (
-//     <ComponentCard title="3D Model Viewer">
-//       <div
-//         {...getRootProps()}
-//         className={`transition border border-dashed rounded-xl p-7 lg:p-10 cursor-pointer hover:border-blue-500 ${
-//           isDragActive
-//             ? "border-blue-500 bg-gray-100 dark:bg-gray-800"
-//             : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
-//         }`}
-//       >
-//         <input {...getInputProps()} />
-//         {modelUrl ? (
-//           <div style={{ width: "100%", height: "400px" }}>
-//             <Canvas>
-//               <ambientLight intensity={0.5} />
-//               <pointLight position={[10, 10, 10]} />
-//               <Suspense fallback={<span>Loading 3D model...</span>}>
-//                 <Model url={modelUrl} />
-//               </Suspense>
-//               <OrbitControls autoRotate autoRotateSpeed={2} />
-//             </Canvas>
-//           </div>
-//         ) : (
-//           <div className="flex flex-col items-center">
-//             <p className="text-gray-500">
-//               {isDragActive
-//                 ? "วางไฟล์ 3D model ที่นี่"
-//                 : "ลากไฟล์ 3D model (.glb, .gltf) หรือคลิกเพื่อเลือกไฟล์"}
-//             </p>
-//           </div>
-//         )}
-//       </div>
-//     </ComponentCard>
-//   );
-// }
-
-
-
+// src/components/3D/Dropzone3D.tsx
 import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useDropzone } from "react-dropzone";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import ComponentCard from "../../common/ComponentCard";
 
-// Component Model สำหรับโหลดโมเดล glTF
+// Component สำหรับโหลดโมเดล 3D ด้วย useGLTF
 function Model({ url }: { url: string }) {
+  // useGLTF โหลดโมเดลจาก URL ที่ให้มา
   const { scene } = useGLTF(url);
   return <primitive object={scene} />;
 }
@@ -342,6 +262,7 @@ export default function Dropzone3D() {
   const [modelUrl, setModelUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // เมื่อผู้ใช้ลากหรือเลือกไฟล์
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles && acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
@@ -358,6 +279,7 @@ export default function Dropzone3D() {
     },
   });
 
+  // เคลียร์ object URL เมื่อ component ถูก unmount
   useEffect(() => {
     return () => {
       if (modelUrl) {
@@ -380,17 +302,11 @@ export default function Dropzone3D() {
         {modelUrl ? (
           <div style={{ width: "100%", height: "400px" }}>
             <Canvas>
-              {/* ตั้ง background ให้กับ Canvas */}
-              <color attach="background" args={["#ffffff"]} />
-              {/* เพิ่มแสง */}
               <ambientLight intensity={0.5} />
               <pointLight position={[10, 10, 10]} />
-              {/* ตั้งกล้องเริ่มต้น */}
-              <PerspectiveCamera makeDefault position={[0, 0, 5]} />
               <Suspense fallback={<span>Loading 3D model...</span>}>
                 <Model url={modelUrl} />
               </Suspense>
-              {/* OrbitControls สำหรับหมุนและซูม */}
               <OrbitControls autoRotate autoRotateSpeed={2} />
             </Canvas>
           </div>
