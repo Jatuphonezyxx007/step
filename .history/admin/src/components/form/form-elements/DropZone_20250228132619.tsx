@@ -413,30 +413,33 @@
 import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useDropzone } from "react-dropzone";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, useGLTF, Html, Environment, Bounds } from "@react-three/drei";
-import { motion } from "framer-motion";
+import { OrbitControls, PerspectiveCamera, useGLTF, Html, Environment } from "@react-three/drei";
+import { motion } from "framer-motion"; // เพิ่ม Motion Effect
 import ComponentCard from "../../common/ComponentCard";
-import * as THREE from "three";
 
-// 🌟 Component Model สำหรับโหลดโมเดล glTF และให้ปรับขนาดอัตโนมัติ
+// 🌟 Component Model สำหรับโหลดโมเดล glTF และเพิ่มพื้นหลังที่สวยขึ้น
 function Model({ url }: { url: string }) {
   console.log("⏳ กำลังโหลดโมเดล:", url);
   useGLTF.preload(url);
   const { scene } = useGLTF(url);
 
   useEffect(() => {
-    console.log("✅ โหลดโมเดลสำเร็จ:", scene);
-
-    // ปรับขนาดโมเดลให้พอดีกับจอ
-    const box = new THREE.Box3().setFromObject(scene);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    
-    scene.position.set(-center.x, -center.y, -center.z);
-    
-    console.log("📏 โมเดลขนาด:", size);
+    return () => {
+      console.log("🧹 กำจัดโมเดลเก่า");
+      scene.traverse((child: any) => {
+        if (child.geometry) child.geometry.dispose();
+        if (child.material) {
+          if (Array.isArray(child.material)) {
+            child.material.forEach((material) => material.dispose());
+          } else {
+            child.material.dispose();
+          }
+        }
+      });
+    };
   }, [scene]);
 
+  console.log("✅ โหลดโมเดลสำเร็จ:", scene);
   return <primitive object={scene} />;
 }
 
@@ -445,7 +448,7 @@ export default function Dropzone3D() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
+    if (acceptedFiles && acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       const url = URL.createObjectURL(file);
       console.log("📌 สร้าง URL โมเดล:", url);
@@ -485,7 +488,7 @@ export default function Dropzone3D() {
         <input {...getInputProps()} />
         {modelUrl ? (
           <div style={{ width: "100%", height: "500px", borderRadius: "10px", overflow: "hidden" }}>
-            <Canvas shadows dpr={[1, 2]}>
+            <Canvas shadows dpr={[1, 2]} camera={{ position: [3, 3, 5], fov: 50 }}>
               {/* 🌟 Background HDR Environment */}
               <Environment preset="sunset" />
 
@@ -494,12 +497,19 @@ export default function Dropzone3D() {
               <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
               <spotLight position={[0, 5, 10]} intensity={2} angle={0.3} penumbra={1} castShadow />
 
-              {/* 🌟 ตั้งค่าให้โมเดลถูกปรับขนาดให้เต็ม Card */}
-              <Bounds fit clip observe>
-                <Suspense fallback={<Html center><p>⏳ กำลังโหลดโมเดล...</p></Html>}>
-                  <Model url={modelUrl} />
-                </Suspense>
-              </Bounds>
+              {/* 🌟 เพิ่มพื้นด้านล่าง */}
+              <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
+                <planeGeometry args={[10, 10]} />
+                <shadowMaterial opacity={0.3} />
+              </mesh>
+
+              {/* 🌟 ตั้งกล้องให้มุมมองดีขึ้น */}
+              <PerspectiveCamera makeDefault position={[2, 2, 5]} fov={45} />
+
+              {/* 🌟 โหลดโมเดลแบบมี Suspense */}
+              <Suspense fallback={<Html center><p>⏳ กำลังโหลดโมเดล...</p></Html>}>
+                <Model url={modelUrl} />
+              </Suspense>
 
               {/* 🌟 ตั้งค่า OrbitControls ให้สมูธขึ้น */}
               <OrbitControls autoRotate autoRotateSpeed={1} enableDamping dampingFactor={0.05} />

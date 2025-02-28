@@ -410,46 +410,95 @@
 
 
 
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useDropzone } from "react-dropzone";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, useGLTF, Html, Environment, Bounds } from "@react-three/drei";
-import { motion } from "framer-motion";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls, PerspectiveCamera, useGLTF, Html } from "@react-three/drei";
 import ComponentCard from "../../common/ComponentCard";
-import * as THREE from "three";
 
-// 🌟 Component Model สำหรับโหลดโมเดล glTF และให้ปรับขนาดอัตโนมัติ
-function Model({ url }: { url: string }) {
-  console.log("⏳ กำลังโหลดโมเดล:", url);
-  useGLTF.preload(url);
-  const { scene } = useGLTF(url);
+// ตรวจจับ WebGL Context Lost
+function WebGLContextFixer() {
+  const { gl } = useThree();
 
   useEffect(() => {
-    console.log("✅ โหลดโมเดลสำเร็จ:", scene);
+    const handleContextLost = (event: Event) => {
+      console.warn("⚠️ WebGL Context Lost. รีโหลด WebGL...");
+      event.preventDefault();
+      gl.forceContextRestore();
+    };
 
-    // ปรับขนาดโมเดลให้พอดีกับจอ
-    const box = new THREE.Box3().setFromObject(scene);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    
-    scene.position.set(-center.x, -center.y, -center.z);
-    
-    console.log("📏 โมเดลขนาด:", size);
-  }, [scene]);
+    gl.domElement.addEventListener("webglcontextlost", handleContextLost);
+    return () => gl.domElement.removeEventListener("webglcontextlost", handleContextLost);
+  }, [gl]);
 
-  return <primitive object={scene} />;
+  return null;
+}
+
+// Component Model สำหรับโหลดโมเดล glTF
+function Model({ url, onLoad, onError }: { url: string; onLoad: () => void; onError: () => void }) {
+  const [scene, setScene] = useState<THREE.Group | null>(null);
+  const [isError, setIsError] = useState(false);
+
+  useEffect(() => {
+    if (!url) return;
+
+    let isMounted = true;
+
+    (async () => {
+      try {
+        console.log("⏳ กำลังโหลดโมเดล:", url);
+
+        // ใช้ fetch() โหลดโมเดลก่อนส่งให้ useGLTF
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("ไม่สามารถโหลดไฟล์");
+
+        const arrayBuffer = await response.arrayBuffer();
+        const blobUrl = URL.createObjectURL(new Blob([arrayBuffer]));
+
+        const gltf = await useGLTF(blobUrl);
+        if (isMounted) {
+          setScene(gltf.scene);
+          onLoad();
+          console.log("✅ โหลดโมเดลสำเร็จ:", url);
+        }
+      } catch (error) {
+        console.error("❌ โหลดโมเดลล้มเหลว:", error);
+        setIsError(true);
+        onError();
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url, onLoad, onError]);
+
+  if (isError) return <Html center><p className="text-red-500">❌ โมเดลโหลดไม่สำเร็จ</p></Html>;
+
+  return scene ? <primitive object={scene} /> : null;
 }
 
 export default function Dropzone3D() {
   const [modelUrl, setModelUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isModelLoading, setIsModelLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
+      console.log("📂 ไฟล์ที่อัพโหลด:", file);
+
+      if (!file.name.endsWith(".glb") && !file.name.endsWith(".gltf")) {
+        setErrorMessage("❌ ไฟล์ที่อัพโหลดไม่ใช่ .glb หรือ .gltf");
+        return;
+      }
+
       const url = URL.createObjectURL(file);
-      console.log("📌 สร้าง URL โมเดล:", url);
       setModelUrl(url);
+      setBlobUrl(url);
+      setIsModelLoading(true);
+      setErrorMessage(null);
     }
   };
 
@@ -463,56 +512,63 @@ export default function Dropzone3D() {
 
   useEffect(() => {
     return () => {
-      if (modelUrl) {
-        console.log("🧹 ล้าง URL:", modelUrl);
-        setTimeout(() => URL.revokeObjectURL(modelUrl), 5000);
+      if (blobUrl) {
+        console.log("🧹 ล้าง URL:", blobUrl);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000); // หน่วงเวลาล้าง URL
       }
     };
-  }, [modelUrl]);
+  }, [blobUrl]);
 
   return (
-    <ComponentCard title="3D Viewer">
-      <motion.div
+    <ComponentCard title="3D Model Viewer">
+      <div
         {...getRootProps()}
-        className={`transition border border-dashed rounded-xl p-7 lg:p-10 cursor-pointer ${
+        className={`transition border border-dashed rounded-xl p-7 lg:p-10 cursor-pointer hover:border-blue-500 ${
           isDragActive
             ? "border-blue-500 bg-gray-100 dark:bg-gray-800"
             : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
         }`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
       >
         <input {...getInputProps()} />
+        {errorMessage && <p className="text-red-500">{errorMessage}</p>}
         {modelUrl ? (
-          <div style={{ width: "100%", height: "500px", borderRadius: "10px", overflow: "hidden" }}>
-            <Canvas shadows dpr={[1, 2]}>
-              {/* 🌟 Background HDR Environment */}
-              <Environment preset="sunset" />
-
-              {/* 🌟 ตั้งค่าแสงให้สวยขึ้น */}
-              <ambientLight intensity={0.3} />
-              <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
-              <spotLight position={[0, 5, 10]} intensity={2} angle={0.3} penumbra={1} castShadow />
-
-              {/* 🌟 ตั้งค่าให้โมเดลถูกปรับขนาดให้เต็ม Card */}
-              <Bounds fit clip observe>
-                <Suspense fallback={<Html center><p>⏳ กำลังโหลดโมเดล...</p></Html>}>
-                  <Model url={modelUrl} />
-                </Suspense>
-              </Bounds>
-
-              {/* 🌟 ตั้งค่า OrbitControls ให้สมูธขึ้น */}
-              <OrbitControls autoRotate autoRotateSpeed={1} enableDamping dampingFactor={0.05} />
+          <div style={{ width: "100%", height: "400px" }}>
+            <Canvas>
+              <WebGLContextFixer />
+              <color attach="background" args={["#ffffff"]} />
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
+              <PerspectiveCamera makeDefault position={[0, 0, 5]} />
+              <Suspense
+                fallback={
+                  <Html center>
+                    <p>⏳ กำลังโหลดโมเดล...</p>
+                  </Html>
+                }
+              >
+                <Model
+                  url={modelUrl}
+                  onLoad={() => setIsModelLoading(false)}
+                  onError={() => {
+                    setErrorMessage("❌ โหลดโมเดลล้มเหลว กรุณาใช้ไฟล์ที่ถูกต้อง");
+                    setModelUrl(null);
+                    setIsModelLoading(false);
+                  }}
+                />
+              </Suspense>
+              <OrbitControls autoRotate autoRotateSpeed={2} />
             </Canvas>
           </div>
         ) : (
-          <motion.div className="flex flex-col items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <p className="text-gray-500 text-lg">
-              {isDragActive ? "📂 วางไฟล์ 3D model ที่นี่" : "📁 ลากไฟล์ 3D model (.glb, .gltf) หรือคลิกเพื่อเลือกไฟล์"}
+          <div className="flex flex-col items-center">
+            <p className="text-gray-500">
+              {isDragActive
+                ? "📂 วางไฟล์ 3D model ที่นี่"
+                : "📁 ลากไฟล์ 3D model (.glb, .gltf) หรือคลิกเพื่อเลือกไฟล์"}
             </p>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
     </ComponentCard>
   );
 }

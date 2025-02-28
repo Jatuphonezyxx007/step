@@ -77,7 +77,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import DefaultInputs from "../../components/form/form-elements/DefaultInputs";
-import DropZone from "../../components/form/form-elements/DropZone";
+import DropzoneComponent from "../../components/form/form-elements/DropZone";
 import PageMeta from "../../components/common/PageMeta";
 import FileInputExample from "../../components/form/form-elements/FileInputExample";
 
@@ -115,7 +115,6 @@ export default function FormElements() {
       <PageBreadcrumb pageTitle="รายละเอียดสินค้า" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
-          <DropZone />
           <FileInputExample />
         </div>
         <div className="space-y-6">
