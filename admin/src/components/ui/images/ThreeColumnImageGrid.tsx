@@ -638,39 +638,201 @@
 
 
 
-import React, { useState } from "react";
-import { Plus } from "lucide-react"; // ใช้ icon `+` จาก Lucide
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
 
-interface ImageUploadProps {
-  initialImages?: string[];
-}
+// export default function ImageUpload() {
+//   const { product_id } = useParams(); // ดึง product_id จาก URL
+//   const [images, setImages] = useState<string[]>([]); // เก็บภาพทั้งหมด
+//   const [loading, setLoading] = useState(false);
 
-export default function ImageUpload({ initialImages = [] }: ImageUploadProps) {
-  const [images, setImages] = useState<string[]>([...initialImages]);
+//   // 🔍 ดึงข้อมูลรูปภาพจาก API
+//   useEffect(() => {
+//     const fetchImages = async () => {
+//       if (!product_id) return;
+//       try {
+//         console.log(`🔍 Fetching images for product_id: ${product_id}`);
+//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+//         const data = await response.json();
+//         console.log("📦 Product API Response:", data);
 
-  // ฟังก์ชันอัปโหลดรูปภาพใหม่
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+//         if (data.success) {
+//           const mainImage = `/products/${data.product.images_main}`; // ภาพหลัก
+//           const additionalImages = data.product.supplementary_images.map(
+//             (img: string) => `/products/${img}`
+//           ); // ภาพรอง
+
+//           setImages([mainImage, ...additionalImages]); // ตั้งค่าภาพทั้งหมด
+//         }
+//       } catch (error) {
+//         console.error("🚨 Error fetching images:", error);
+//       }
+//     };
+
+//     fetchImages();
+//   }, [product_id]);
+
+//   // 📤 อัปโหลดรูปภาพใหม่
+//   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+//     const file = event.target.files?.[0];
+//     if (!file) return;
+
+//     const formData = new FormData();
+//     formData.append("image", file);
+//     formData.append("product_id", product_id!);
+
+//     setLoading(true);
+
+//     try {
+//       const response = await fetch(`http://localhost:3000/api/upload-image`, {
+//         method: "POST",
+//         body: formData,
+//       });
+
+//       const data = await response.json();
+//       if (data.success) {
+//         const newImage = `/products/${data.filename}`; // Path รูปภาพใหม่
+//         setImages((prevImages) => [...prevImages, newImage]); // เพิ่มรูปภาพใหม่ต่อท้าย
+//       } else {
+//         console.error("❌ Upload failed:", data.message);
+//       }
+//     } catch (error) {
+//       console.error("🚨 Error uploading image:", error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-2">
+//       <label className="text-gray-700 font-medium">รูปภาพสินค้า</label>
+//       <div className="flex items-center gap-3 bg-gray-100 p-3 rounded-lg">
+//         {/* แสดงรูปภาพที่มีอยู่ */}
+//         {images.map((imgSrc, index) => (
+//           <div key={index} className="relative w-20 h-20 border border-gray-300 rounded-lg overflow-hidden">
+//             <img src={imgSrc} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
+//           </div>
+//         ))}
+
+//         {/* ปุ่มเพิ่มรูปภาพ */}
+//         <label className="w-20 h-20 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
+//           {loading ? (
+//             <span className="material-icons text-gray-400 text-3xl animate-spin">sync</span>
+//           ) : (
+//             <span className="material-icons text-gray-400 text-3xl">add</span>
+//           )}
+//           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+//         </label>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+"use client";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
+  const { product_id } = useParams(); // ดึง product_id จาก URL
+  const [images, setImages] = useState<{ filename: string; fileBuffer?: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ 🔍 ดึงข้อมูลรูปภาพที่มีอยู่ในฐานข้อมูล
+  useEffect(() => {
+    const fetchExistingImages = async () => {
+      if (!product_id) return;
+      try {
+        const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+        const data = await response.json();
+  
+        if (data.success) {
+          const existingImages = [];
+  
+          if (data.product.images_main) {
+            existingImages.push({
+              filename: data.product.images_main,
+              fileBuffer: `/products/${data.product.images_main}`,
+            });
+          }
+  
+          if (data.product.supplementary_images) {
+            data.product.supplementary_images.forEach((img) => {
+              existingImages.push({
+                filename: img,
+                fileBuffer: `/products/${img}`,
+              });
+            });
+          }
+  
+          setImages(existingImages);
+          onImagesUpdate(existingImages);
+        }
+      } catch (error) {
+        console.error("🚨 Error fetching images:", error);
+      }
+    };
+  
+    fetchExistingImages();
+  }, [product_id]);
+  
+  // ✅ 📤 อัปโหลดรูปภาพใหม่ (แบบชั่วคราว)
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const newImageURL = URL.createObjectURL(file); // สร้าง URL จากไฟล์ที่อัปโหลด
-      setImages((prevImages) => [...prevImages, newImageURL]); // เพิ่มรูปใหม่ใน state
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("product_id", product_id!);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
+        const updatedImages = [...images, newImage];
+        setImages(updatedImages);
+        onImagesUpdate(updatedImages); // ✅ ส่งข้อมูลไปให้ `EditForm.tsx`
+      } else {
+        console.error("❌ Upload failed:", data.message);
+      }
+    } catch (error) {
+      console.error("🚨 Error uploading image:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="space-y-2">
-      <label className="text-gray-700 font-medium">รูปภาพสินค้า <span className="text-gray-500">(คลิก + เพื่อเพิ่ม)</span></label>
+      <label className="text-gray-700 font-medium">รูปภาพสินค้า</label>
       <div className="flex items-center gap-3 bg-gray-100 p-3 rounded-lg">
-        {/* แสดงรูปภาพที่อัปโหลด */}
-        {images.map((imgSrc, index) => (
+        {/* ✅ แสดงรูปภาพที่มีอยู่ */}
+        {images.map((img, index) => (
           <div key={index} className="relative w-20 h-20 border border-gray-300 rounded-lg overflow-hidden">
-            <img src={imgSrc} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
+            <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
           </div>
         ))}
 
-        {/* ปุ่มเพิ่มรูปภาพ */}
+        {/* ✅ ปุ่มเพิ่มรูปภาพ */}
         <label className="w-20 h-20 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
-          <Plus size={30} className="text-gray-400" />
+          {loading ? (
+            <span className="material-icons text-gray-400 text-3xl animate-spin">sync</span>
+          ) : (
+            <span className="material-icons text-gray-400 text-3xl">add</span>
+          )}
           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
         </label>
       </div>

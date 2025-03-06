@@ -1534,10 +1534,13 @@ const argon2 = require('argon2');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-
-const app = express();
+const bodyParser = require("body-parser");
+// const app = express();
 const port = process.env.PORT || 3000; // ใช้ค่าจาก .env หากมี
 
+const app = express();
+app.use(bodyParser.json({ limit: "50mb" })); // ✅ เพิ่มขนาด JSON สูงสุด
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
 app.use(express.json());
 
@@ -1568,23 +1571,9 @@ async function checkDBConnection() {
 }
 checkDBConnection();
 
-// กำหนดที่เก็บไฟล์
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../admin/public/products/')); // บันทึกที่โฟลเดอร์นี้
-  },
-  filename: (req, file, cb) => {
-    const { product_id, index } = req.params;
-
-    // ดึงนามสกุลไฟล์ เช่น .jpg, .png
-    const fileExt = path.extname(file.originalname);
-
-    // กำหนดชื่อไฟล์ใหม่ -> productid_2.jpg, productid_3.png
-    const newFileName = `${product_id}_${parseInt(index) + 1}${fileExt}`;
-
-    cb(null, newFileName);
-  }
-});
+// 👉 ตั้งค่าให้ `multer` เก็บไฟล์ใน memory แทนที่จะเขียนลง disk ทันที
+const storage = multer.memoryStorage(); // ✅ ใช้ memory storage ไม่บันทึกไฟล์ทันที
+const upload = multer({ storage });
 
 // const upload = multer({ storage: storage });
 
@@ -1704,6 +1693,8 @@ app.get('/api/products/:product_id', async (req, res) => {
     product.supplementary_images = imagesRows.map(row => row.path);
 
     res.status(200).json({ success: true, product });
+
+    
   } catch (error) {
     console.error("Error fetching product details:", error);
     res.status(500).json({ success: false, message: "Error fetching product details", error: error.message });
@@ -1898,6 +1889,120 @@ app.get('/api/categories', async (req, res) => {
 //     }
 //   );
 // });
+
+
+
+// ✅ API: อัปเดตข้อมูลสินค้า
+// app.put("/api/products/:product_id", async (req, res) => {
+//   try {
+//     const { product_id } = req.params;
+//     const { product_name, category_id, series_id, detail } = req.body;
+
+//     if (!product_name || !category_id) {
+//       return res.status(400).json({ success: false, message: "Missing required fields" });
+//     }
+
+//     const query = `
+//       UPDATE products 
+//       SET product_name = ?, category_id = ?, series_id = ? 
+//       WHERE product_id = ?
+//     `;
+
+//     await pool.query(query, [product_name, category_id, series_id, product_id]);
+
+//     // ✅ อัปเดต product_details
+//     if (detail) {
+//       await pool.query(
+//         "INSERT INTO product_details (product_id, detail) VALUES (?, ?) ON DUPLICATE KEY UPDATE detail = ?",
+//         [product_id, detail, detail]
+//       );
+//     }
+
+//     res.status(200).json({ success: true, message: "Product updated successfully" });
+//   } catch (error) {
+//     console.error("🚨 Error updating product:", error);
+//     res.status(500).json({ success: false, message: "Error updating product" });
+//   }
+// });
+
+
+
+
+// ✅ API: อัปโหลดรูปภาพ (ยังไม่บันทึกลง `/public/products`)
+app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
+  try {
+    const { product_id } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    if (!product_id) {
+      return res.status(400).json({ success: false, message: "Product ID is missing" });
+    }
+
+    const fileExt = path.extname(req.file.originalname);
+    
+    // 🔍 ตรวจสอบจำนวนรูปภาพที่มีอยู่แล้ว
+    const [imageCount] = await pool.query(
+      "SELECT COUNT(*) AS count FROM product_images WHERE product_id = ?",
+      [product_id]
+    );
+    const index = imageCount[0].count + 1; // กำหนด index ถัดไป
+    const filename = `/${product_id}_${index}${fileExt}`;
+
+    // 🛑 ยังไม่ copy ไปที่ `/public/products`
+    console.log("📸 Temporary uploaded image:", filename);
+
+    res.status(200).json({ success: true, filename, fileBuffer: req.file.buffer.toString("base64") });
+  } catch (error) {
+    console.error("🚨 Error uploading image:", error);
+    res.status(500).json({ success: false, message: "Error uploading image" });
+  }
+});
+
+// ✅ API บันทึกภาพ (หลังจากกดบันทึก)
+app.post("/api/save-images", upload.array("images"), async (req, res) => {
+  try {
+    const { product_id } = req.body;
+    const images = req.files;
+
+    console.log("🔍 Received product_id:", product_id);
+    console.log("🖼️ Received images:", images.length);
+
+    if (!product_id || !images || images.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
+    }
+
+    const savePath = path.join(__dirname, "../admin/public/products");
+    if (!fs.existsSync(savePath)) {
+      fs.mkdirSync(savePath, { recursive: true });
+    }
+
+    for (let index = 0; index < images.length; index++) {
+      const file = images[index];
+      const fileExt = path.extname(file.originalname);
+      const filename = `${product_id}_${index + 1}${fileExt}`;
+      const filePath = path.join(savePath, filename);
+      fs.writeFileSync(filePath, file.buffer);
+
+      if (index === 0) {
+        // ✅ บันทึกเป็นภาพหลัก
+        await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+      } else {
+        // ✅ บันทึกเป็นภาพรอง
+        await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+      }
+    }
+
+    res.status(200).json({ success: true, message: "Images saved successfully" });
+  } catch (error) {
+    console.error("🚨 Error saving images:", error);
+    res.status(500).json({ success: false, message: "Error saving images" });
+  }
+});
+
+
+
 
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
