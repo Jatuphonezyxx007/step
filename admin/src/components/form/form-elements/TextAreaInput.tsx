@@ -182,61 +182,88 @@
 
 
 
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
+// import TextArea from "../input/TextArea";
+// import Label from "../Label";
+
+// export default function TextAreaInput() {
+//   const { product_id } = useParams(); // ดึง product_id จาก URL
+//   const [productDetail, setProductDetail] = useState<string>(""); // เก็บรายละเอียดสินค้า
+
+//   useEffect(() => {
+//     const fetchProduct = async () => {
+//       if (!product_id) {
+//         console.warn("⚠️ No product_id provided!");
+//         return;
+//       }
+
+//       try {
+//         console.log(`🔍 Fetching product data from /api/products/${product_id}`);
+//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+
+//         console.log("🌐 Raw response:", response);
+
+//         if (!response.ok) {
+//           console.error(`❌ HTTP Error: ${response.status} - ${response.statusText}`);
+//           return;
+//         }
+
+//         const data = await response.json();
+//         console.log("📦 API Response:", data);
+
+//         if (data.success) {
+//           const detailText = data.product.detail ?? ""; // ใช้ `?? ""` ป้องกัน `null` หรือ `undefined`
+//           console.log("✅ Product detail:", detailText);
+//           setProductDetail(detailText);
+//         } else {
+//           console.error("❌ API returned an error:", data.message);
+//         }
+//       } catch (error) {
+//         console.error("🚨 Error fetching product:", error);
+//       }
+//     };
+
+//     fetchProduct();
+//   }, [product_id]); // เรียก API เมื่อ product_id เปลี่ยน
+
+//   return (
+//     <div className="space-y-6">
+//       <div>
+//         <Label>รายละเอียดสินค้า</Label>
+//         <TextArea
+//           value={productDetail} // แสดงรายละเอียดสินค้าใน TextArea
+//           onChange={(e) => setProductDetail(e.target.value)}
+//           rows={6}
+//           placeholder="คำอธิบายสินค้า" // แสดงข้อความถ้าไม่มีข้อมูล
+//         />
+//       </div>
+//     </div>
+//   );
+// }
+
+
 "use client";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React from "react";
 import TextArea from "../input/TextArea";
 import Label from "../Label";
 
-export default function TextAreaInput() {
-  const { product_id } = useParams(); // ดึง product_id จาก URL
-  const [productDetail, setProductDetail] = useState<string>(""); // เก็บรายละเอียดสินค้า
+interface Props {
+  productDetail: string;
+  setProductDetail: (value: string) => void;
+}
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!product_id) {
-        console.warn("⚠️ No product_id provided!");
-        return;
-      }
-
-      try {
-        console.log(`🔍 Fetching product data from /api/products/${product_id}`);
-        const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-
-        console.log("🌐 Raw response:", response);
-
-        if (!response.ok) {
-          console.error(`❌ HTTP Error: ${response.status} - ${response.statusText}`);
-          return;
-        }
-
-        const data = await response.json();
-        console.log("📦 API Response:", data);
-
-        if (data.success) {
-          const detailText = data.product.detail ?? ""; // ใช้ `?? ""` ป้องกัน `null` หรือ `undefined`
-          console.log("✅ Product detail:", detailText);
-          setProductDetail(detailText);
-        } else {
-          console.error("❌ API returned an error:", data.message);
-        }
-      } catch (error) {
-        console.error("🚨 Error fetching product:", error);
-      }
-    };
-
-    fetchProduct();
-  }, [product_id]); // เรียก API เมื่อ product_id เปลี่ยน
-
+export default function TextAreaInput({ productDetail, setProductDetail }: Props) {
   return (
     <div className="space-y-6">
       <div>
         <Label>รายละเอียดสินค้า</Label>
         <TextArea
-          value={productDetail} // แสดงรายละเอียดสินค้าใน TextArea
-          onChange={(e) => setProductDetail(e.target.value)}
+          value={productDetail}
+          onChange={setProductDetail} // ✅ แก้ไขให้ `onChange` ส่งค่า `value` โดยตรง
           rows={6}
-          placeholder="คำอธิบายสินค้า" // แสดงข้อความถ้าไม่มีข้อมูล
+          placeholder="คำอธิบายสินค้า"
         />
       </div>
     </div>

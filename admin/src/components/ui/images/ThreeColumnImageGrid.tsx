@@ -818,16 +818,16 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
   return (
     <div className="space-y-2">
       <label className="text-gray-700 font-medium">รูปภาพสินค้า</label>
-      <div className="flex items-center gap-3 bg-gray-100 p-3 rounded-lg">
+      <div className="grid grid-cols-3 gap-3 bg-gray-100 p-3 rounded-lg">
         {/* ✅ แสดงรูปภาพที่มีอยู่ */}
         {images.map((img, index) => (
-          <div key={index} className="relative w-20 h-20 border border-gray-300 rounded-lg overflow-hidden">
+          <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">
             <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
           </div>
         ))}
-
+  
         {/* ✅ ปุ่มเพิ่มรูปภาพ */}
-        <label className="w-20 h-20 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
+        <label className="w-full h-28 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
           {loading ? (
             <span className="material-icons text-gray-400 text-3xl animate-spin">sync</span>
           ) : (
@@ -838,4 +838,4 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       </div>
     </div>
   );
-}
+  }

@@ -1973,24 +1973,39 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
     }
 
+    // ✅ ใช้ path admin/public/products
     const savePath = path.join(__dirname, "../admin/public/products");
+
     if (!fs.existsSync(savePath)) {
       fs.mkdirSync(savePath, { recursive: true });
+      console.log("📂 Created directory:", savePath);
     }
+
+    // ดึงรายชื่อไฟล์ที่มีอยู่ในฐานข้อมูล
+    const [existingImages] = await pool.query(
+      "SELECT path FROM product_images WHERE product_id = ?",
+      [product_id]
+    );
+    const existingImageSet = new Set(existingImages.map(img => img.path));
 
     for (let index = 0; index < images.length; index++) {
       const file = images[index];
       const fileExt = path.extname(file.originalname);
-      const filename = `${product_id}_${index + 1}${fileExt}`;
+      const filename = `${product_id}_${index + 1}${fileExt}`; // ✅ ไม่มี "/" นำหน้า
       const filePath = path.join(savePath, filename);
-      fs.writeFileSync(filePath, file.buffer);
 
-      if (index === 0) {
-        // ✅ บันทึกเป็นภาพหลัก
-        await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+      // 🔍 ตรวจสอบว่ามีไฟล์นี้อยู่แล้วหรือไม่
+      if (!existingImageSet.has(filename) && !fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, file.buffer);
+        console.log(`✅ Saved image: ${filePath}`);
+
+        if (index === 0) {
+          await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+        } else {
+          await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+        }
       } else {
-        // ✅ บันทึกเป็นภาพรอง
-        await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+        console.log(`⏭️ Skipping existing image: ${filename}`);
       }
     }
 
@@ -1998,6 +2013,242 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
   } catch (error) {
     console.error("🚨 Error saving images:", error);
     res.status(500).json({ success: false, message: "Error saving images" });
+  }
+});
+
+
+
+// // ✅ API: อัปโหลดรูปภาพแบบชั่วคราว
+// app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+//     if (!req.file) {
+//       return res.status(400).json({ success: false, message: "No file uploaded" });
+//     }
+
+//     if (!product_id) {
+//       return res.status(400).json({ success: false, message: "Product ID is missing" });
+//     }
+
+//     const fileExt = path.extname(req.file.originalname);
+//     const filename = `${product_id}_${Date.now()}${fileExt}`; // ใช้ timestamp ป้องกันชื่อไฟล์ซ้ำ
+
+//     // 🛑 ส่งค่า base64 กลับไปให้แสดงผลชั่วคราว
+//     console.log("📸 Temporary uploaded image:", filename);
+//     res.status(200).json({ success: true, filename, fileBuffer: req.file.buffer.toString("base64") });
+
+//   } catch (error) {
+//     console.error("🚨 Error uploading image:", error);
+//     res.status(500).json({ success: false, message: "Error uploading image" });
+//   }
+// });
+
+// // ✅ API: บันทึกภาพถาวร (ลงโฟลเดอร์และฐานข้อมูล)
+// app.post("/api/save-images", upload.array("images"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+//     const images = req.files;
+
+//     console.log("🔍 Received product_id:", product_id);
+//     console.log("🖼️ Received images:", images.length);
+
+//     if (!product_id || !images || images.length === 0) {
+//       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
+//     }
+
+//     // ✅ ใช้ path `admin/public/products`
+//     const savePath = path.join(__dirname, "../admin/public/products");
+//     if (!fs.existsSync(savePath)) {
+//       fs.mkdirSync(savePath, { recursive: true });
+//       console.log("📂 Created directory:", savePath);
+//     }
+
+//     // ✅ ดึงจำนวนภาพที่มีอยู่ก่อนจากฐานข้อมูล
+//     const [existingImages] = await pool.query(
+//       "SELECT path FROM product_images WHERE product_id = ?",
+//       [product_id]
+//     );
+//     const existingImageSet = new Set(existingImages.map(img => img.path));
+
+//     let imageIndex = existingImages.length + 1; // ลำดับภาพที่ต้องใช้ต่อจากที่มีอยู่
+
+//     for (let index = 0; index < images.length; index++) {
+//       const file = images[index];
+//       const fileExt = path.extname(file.originalname);
+//       let filename = `${product_id}_${imageIndex}${fileExt}`;
+
+//       // ✅ บันทึกชื่อไฟล์ลงฐานข้อมูลก่อน
+//       if (imageIndex === 1) {
+//         // ✅ บันทึกเป็นภาพหลักของสินค้า
+//         await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+//         console.log(`📦 Updated main product image in DB: ${filename}`);
+//       } else {
+//         // ✅ บันทึกเป็นภาพรองลงตาราง product_images
+//         await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+//         console.log(`📦 Inserted into product_images: ${filename}`);
+//       }
+
+//       imageIndex++; // เพิ่มลำดับภาพ
+
+//       // ✅ เปลี่ยนชื่อไฟล์จริงและคัดลอกไปที่โฟลเดอร์
+//       const tempFilePath = path.join(savePath, file.filename); // ไฟล์ชั่วคราวจาก multer
+//       const finalFilePath = path.join(savePath, filename); // ไฟล์ใหม่
+
+//       fs.renameSync(tempFilePath, finalFilePath);
+//       console.log(`✅ Moved image from temp to final: ${finalFilePath}`);
+//     }
+
+//     res.status(200).json({ success: true, message: "Images saved successfully" });
+
+//   } catch (error) {
+//     console.error("🚨 Error saving images:", error);
+//     res.status(500).json({ success: false, message: "Error saving images" });
+//   }
+// });
+
+// // ✅ API: อัปโหลดรูปภาพ (ยังไม่บันทึกลง `/public/products`)
+// app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+//     if (!req.file) {
+//       return res.status(400).json({ success: false, message: "No file uploaded" });
+//     }
+
+//     if (!product_id) {
+//       return res.status(400).json({ success: false, message: "Product ID is missing" });
+//     }
+
+//     const fileExt = path.extname(req.file.originalname);
+    
+//     // 🔍 ตรวจสอบจำนวนรูปภาพที่มีอยู่แล้ว
+//     const [imageCount] = await pool.query(
+//       "SELECT COUNT(*) AS count FROM product_images WHERE product_id = ?",
+//       [product_id]
+//     );
+//     const index = imageCount[0].count + 1; // กำหนด index ถัดไป
+//     const filename = `/${product_id}_${index}${fileExt}`;
+
+//     // 🛑 ยังไม่ copy ไปที่ `/public/products`
+//     console.log("📸 Temporary uploaded image:", filename);
+
+//     res.status(200).json({ success: true, filename, fileBuffer: req.file.buffer.toString("base64") });
+//   } catch (error) {
+//     console.error("🚨 Error uploading image:", error);
+//     res.status(500).json({ success: false, message: "Error uploading image" });
+//   }
+// });
+
+// // ✅ API บันทึกภาพ (หลังจากกดบันทึก)
+// app.post("/api/save-images", upload.array("images"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+//     const images = req.files;
+
+//     console.log("🔍 Received product_id:", product_id);
+//     console.log("🖼️ Received images:", images.length);
+
+//     if (!product_id || !images || images.length === 0) {
+//       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
+//     }
+
+//     const savePath = path.join(__dirname, "../admin/public/products");
+//     if (!fs.existsSync(savePath)) {
+//       fs.mkdirSync(savePath, { recursive: true });
+//     }
+
+//     for (let index = 0; index < images.length; index++) {
+//       const file = images[index];
+//       const fileExt = path.extname(file.originalname);
+//       const filename = `${product_id}_${index + 1}${fileExt}`;
+//       const filePath = path.join(savePath, filename);
+//       fs.writeFileSync(filePath, file.buffer);
+
+//       if (index === 0) {
+//         // ✅ บันทึกเป็นภาพหลัก
+//         await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+//       } else {
+//         // ✅ บันทึกเป็นภาพรอง
+//         await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+//       }
+//     }
+
+//     res.status(200).json({ success: true, message: "Images saved successfully" });
+//   } catch (error) {
+//     console.error("🚨 Error saving images:", error);
+//     res.status(500).json({ success: false, message: "Error saving images" });
+//   }
+// });
+
+
+
+// ✅ API: อัปเดตข้อมูลสินค้า
+app.put("/api/products/:product_id", async (req, res) => {
+  try {
+    const { product_id } = req.params;
+    const { product_name, category_id, series_id, detail } = req.body;
+
+    if (!product_name || !category_id) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    console.log(`📝 Updating product ID: ${product_id}`);
+    console.log("📦 Received Data:", { product_name, category_id, series_id, detail });
+
+    // ✅ ตรวจสอบว่าข้อมูลเปลี่ยนแปลงหรือไม่
+    const [existingProduct] = await pool.query(
+      "SELECT product_name, category_id, series_id FROM products WHERE product_id = ?",
+      [product_id]
+    );
+
+    if (existingProduct.length > 0) {
+      const { product_name: currentName, category_id: currentCategory, series_id: currentSeries } = existingProduct[0];
+
+      if (currentName === product_name && currentCategory === category_id && currentSeries === series_id) {
+        console.log("⚠️ No changes detected, skipping UPDATE.");
+      } else {
+        const updateProductQuery = `
+          UPDATE products 
+          SET product_name = ?, category_id = ?, series_id = ? 
+          WHERE product_id = ?
+        `;
+
+        const [updateResult] = await pool.query(updateProductQuery, [product_name, category_id, series_id, product_id]);
+
+        console.log("🔄 Product Update Result:", updateResult);
+      }
+    }
+
+    // ✅ ตรวจสอบว่ามี `detail` ใน `product_details` หรือไม่
+    const [existingDetail] = await pool.query(
+      "SELECT product_id FROM product_details WHERE product_id = ?",
+      [product_id]
+    );
+
+    if (existingDetail.length > 0) {
+      const updateDetailQuery = `
+        UPDATE product_details 
+        SET detail = ? 
+        WHERE product_id = ?
+      `;
+
+      const [updateDetailResult] = await pool.query(updateDetailQuery, [detail, product_id]);
+
+      console.log("🔄 Product Detail Update Result:", updateDetailResult);
+    } else {
+      const insertDetailQuery = `
+        INSERT INTO product_details (product_id, detail) 
+        VALUES (?, ?)
+      `;
+
+      const [insertDetailResult] = await pool.query(insertDetailQuery, [product_id, detail]);
+
+      console.log("🆕 Inserted new detail:", insertDetailResult);
+    }
+
+    res.status(200).json({ success: true, message: "Product updated successfully" });
+  } catch (error) {
+    console.error("🚨 Error updating product:", error);
+    res.status(500).json({ success: false, message: "Error updating product" });
   }
 });
 

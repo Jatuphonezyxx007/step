@@ -164,55 +164,83 @@
 // }
 
 
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
+// import Label from "../Label";
+// import Input from "../input/InputField";
+
+// export default function DefaultInputs() {
+//   const { product_id } = useParams(); // รับ product_id จาก URL
+//   const [productName, setProductName] = useState("");
+
+//   useEffect(() => {
+//     console.log("🔹 product_id from URL:", product_id); // เช็คค่า product_id
+
+//     const fetchProduct = async () => {
+//       if (!product_id) {
+//         console.warn("⚠️ No product_id provided!");
+//         return;
+//       } 
+    
+//       try {
+//         console.log(`🔍 Fetching product data from /api/products/${product_id}`);
+//         // const response = await fetch(`/api/products/${product_id}`);
+//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+
+    
+//         console.log("🌐 Raw response:", response); // ตรวจสอบ response
+    
+//         if (!response.ok) {
+//           console.error(`❌ HTTP Error: ${response.status} - ${response.statusText}`);
+//           return;
+//         }
+    
+//         const data = await response.json();
+//         console.log("📦 API Response:", data);
+    
+//         if (data.success) {
+//           console.log("✅ Product name:", data.product.product_name);
+//           setProductName(data.product.product_name);
+//         } else {
+//           console.error("❌ API returned an error:", data.message);
+//         }
+//       } catch (error) {
+//         console.error("🚨 Error fetching product:", error);
+//       }
+//     };
+    
+//     fetchProduct();
+//   }, [product_id]);
+
+//   return (
+//     <div className="space-y-6">
+//       <div>
+//         <Label>ชื่อสินค้า</Label>
+//         <Input 
+//           type="text"
+//           value={productName}
+//           onChange={(e) => setProductName(e.target.value)}
+//         />
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
 "use client";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React from "react";
 import Label from "../Label";
 import Input from "../input/InputField";
 
-export default function DefaultInputs() {
-  const { product_id } = useParams(); // รับ product_id จาก URL
-  const [productName, setProductName] = useState("");
+interface Props {
+  productName: string;
+  setProductName: (value: string) => void;
+}
 
-  useEffect(() => {
-    console.log("🔹 product_id from URL:", product_id); // เช็คค่า product_id
-
-    const fetchProduct = async () => {
-      if (!product_id) {
-        console.warn("⚠️ No product_id provided!");
-        return;
-      } 
-    
-      try {
-        console.log(`🔍 Fetching product data from /api/products/${product_id}`);
-        // const response = await fetch(`/api/products/${product_id}`);
-        const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-
-    
-        console.log("🌐 Raw response:", response); // ตรวจสอบ response
-    
-        if (!response.ok) {
-          console.error(`❌ HTTP Error: ${response.status} - ${response.statusText}`);
-          return;
-        }
-    
-        const data = await response.json();
-        console.log("📦 API Response:", data);
-    
-        if (data.success) {
-          console.log("✅ Product name:", data.product.product_name);
-          setProductName(data.product.product_name);
-        } else {
-          console.error("❌ API returned an error:", data.message);
-        }
-      } catch (error) {
-        console.error("🚨 Error fetching product:", error);
-      }
-    };
-    
-    fetchProduct();
-  }, [product_id]);
-
+export default function DefaultInputs({ productName, setProductName }: Props) {
   return (
     <div className="space-y-6">
       <div>

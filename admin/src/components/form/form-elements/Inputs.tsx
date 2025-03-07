@@ -141,14 +141,31 @@ import TextAreaInput from "./TextAreaInput";
 import SelectInputs from "./SelectInputs";
 import ComponentCard from "../../common/ComponentCard";
 
-export default function Inputs() {
+// export default function Inputs() {
+//   return (
+//     <div>
+//       <ComponentCard title="รายละเอียดสินค้า">
+//         <DefaultInputs />
+//         <TextAreaInput />
+//         <SelectInputs />
+//       </ComponentCard>
+//     </div>
+//   )
+// }
+
+
+export default function Inputs({ 
+  productName, setProductName, 
+  productDetail, setProductDetail, 
+  selectedCategory, setSelectedCategory 
+}) {
   return (
     <div>
       <ComponentCard title="รายละเอียดสินค้า">
-        <DefaultInputs />
-        <TextAreaInput />
-        <SelectInputs />
+        <DefaultInputs productName={productName} setProductName={setProductName} />
+        <TextAreaInput productDetail={productDetail} setProductDetail={setProductDetail} />
+        <SelectInputs selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} />
       </ComponentCard>
     </div>
-  )
+  );
 }

@@ -452,14 +452,20 @@ import DropZone from "../../components/form/form-elements/DropZone";
 import ThreeColumnImageGrid from "../../components/ui/images/ThreeColumnImageGrid";
 import Inputs from "../../components/form/form-elements/Inputs";
 
+
 export default function EditForm() {
   const { product_id } = useParams<{ product_id?: string }>();
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<any>({});
   const [categories, setCategories] = useState<{ value: number; label: string }[]>([]);
-  const [tempImages, setTempImages] = useState([]); // 🔥 เก็บข้อมูลรูปภาพที่อัปโหลด
+  const [tempImages, setTempImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // ✅ ตัวแปรเก็บค่า input ที่เปลี่ยนแปลง
+  const [productName, setProductName] = useState("");
+  const [productDetail, setProductDetail] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   useEffect(() => {
     if (!product_id) {
@@ -475,6 +481,9 @@ export default function EditForm() {
       .then((data) => {
         if (data.success) {
           setProduct(data.product);
+          setProductName(data.product.product_name || "");
+          setProductDetail(data.product.detail || "");
+          setSelectedCategory(String(data.product.category_id || ""));
         } else {
           setError(data.message);
         }
@@ -487,78 +496,75 @@ export default function EditForm() {
       });
   }, [product_id]);
 
-  useEffect(() => {
-    fetch(`http://localhost:3000/api/categories`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setCategories(data.categories);
-        } else {
-          setError(data.message);
-        }
-      })
-      .catch((err) => {
-        console.error("Error fetching categories:", err);
-        setError("Error fetching categories");
-      });
-  }, []);
-
-  // ✅ ฟังก์ชันที่ใช้รับค่ารูปภาพที่ถูกอัปโหลดจาก ThreeColumnImageGrid.tsx
-  const handleImagesUpdate = (updatedImages) => {
-    console.log("📸 Updated Images:", updatedImages);
-    setTempImages(updatedImages);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
   
     if (!product) return;
   
+    const updatedProduct = {
+      product_name: productName.trim(),
+      category_id: selectedCategory ? Number(selectedCategory) : null,
+      series_id: product.series_id || null,
+      detail: productDetail.trim() || null,
+    };
+  
     try {
-      const formData = new FormData();
-      formData.append("product_id", product_id!);
+      console.log("📤 Updating product:", updatedProduct);
   
-      for (let i = 0; i < tempImages.length; i++) {
-        const img = tempImages[i];
-        const response = await fetch(img.fileBuffer); // 🔥 ดึง blob data จาก base64
-        const blob = await response.blob();
-        const file = new File([blob], `image_${i}.png`, { type: "image/png" });
-        formData.append("images", file);
-      }
-  
-      console.log("📤 Sending FormData:", formData);
-  
-      const response = await fetch(`http://localhost:3000/api/save-images`, {
-        method: "POST",
-        body: formData,
+      const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedProduct),
       });
   
       const data = await response.json();
       if (data.success) {
-        console.log("✅ Images saved successfully!");
+        console.log("✅ Product updated successfully!");
+  
+        // ✅ บันทึกภาพใหม่เท่านั้น
+        const newImages = tempImages.filter(img => !img.existing); // คัดเฉพาะภาพที่เพิ่งอัปโหลด
+        if (newImages.length > 0) {
+          const formData = new FormData();
+          formData.append("product_id", product_id!);
+  
+          for (let i = 0; i < newImages.length; i++) {
+            const img = newImages[i];
+            if (img.fileBuffer) {
+              // 🔄 แปลง Base64 เป็น Blob
+              const response = await fetch(img.fileBuffer);
+              const blob = await response.blob();
+              const file = new File([blob], `image_${i}.png`, { type: "image/png" });
+  
+              formData.append("images", file);
+            }
+          }
+  
+          const imageResponse = await fetch("http://localhost:3000/api/save-images", {
+            method: "POST",
+            body: formData,
+          });
+  
+          const imageData = await imageResponse.json();
+          if (imageData.success) {
+            console.log("✅ Images saved successfully!");
+          } else {
+            console.error("❌ Error saving images:", imageData.message);
+          }
+        } else {
+          console.log("⏭️ No new images to upload");
+        }
+  
+        // ✅ เปลี่ยนเส้นทางไปยัง Dashboard
+        navigate("/dashboard");
       } else {
-        console.error("❌ Error saving images:", data.message);
+        console.error("❌ Error updating product:", data.message);
       }
     } catch (error) {
-      console.error("🚨 Error saving images:", error);
+      console.error("🚨 Error updating product:", error);
     }
-  
-    // ✅ บันทึกข้อมูลสินค้า
-    fetch(`http://localhost:3000/api/products/${product_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) navigate("/");
-      })
-      .catch((err) => {
-        console.error("Error updating product:", err);
-      });
   };
+          
   
-
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
@@ -568,17 +574,22 @@ export default function EditForm() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <ComponentCard title="รูปภาพสินค้า">
-            <ThreeColumnImageGrid onImagesUpdate={handleImagesUpdate} />
+            <ThreeColumnImageGrid onImagesUpdate={setTempImages} />
             <DropZone />
           </ComponentCard>
         </div>
         <form onSubmit={handleSubmit}>
-          <Inputs />
+          {/* ✅ ส่ง props ไปให้ input */}
+          <Inputs 
+            productName={productName}
+            setProductName={setProductName}
+            productDetail={productDetail}
+            setProductDetail={setProductDetail}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+          />
           <br />
           <div className="flex items-center justify-end gap-5">
-            <Button size="sm" variant="primary" className="bg-red-500 hover:bg-red-600 border-red-500 text-white">
-              ลบรายการ
-            </Button>
             <Button type="submit" size="sm" variant="primary">
               บันทึกข้อมูล
             </Button>
