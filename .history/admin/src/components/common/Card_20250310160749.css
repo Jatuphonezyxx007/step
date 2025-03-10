@@ -38,5 +38,6 @@
   .card-footer {
     margin-top: auto; /* ดัน footer ลงไปอยู่ด้านล่างเสมอ */
     padding: 1rem;
+    background-color: #f8f9fa; /* สีพื้นหลังของ footer (เลือกใช้ตามต้องการ) */
   }
   

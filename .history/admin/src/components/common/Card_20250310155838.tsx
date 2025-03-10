@@ -45,14 +45,14 @@ export interface CardProps {
 
 const Card: React.FC<CardProps> = ({ title, image }) => {
   return (
-    <div className="card rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div className="card rounded-2xl border border-gray-200 border-gray-100 dark:border-gray-800 sm:p-6">
       {image && (
         <div className="card-image">
           <img src={image} alt={title} />
         </div>
       )}
-      <div className="card-footer">
-        <h3 className="text-xl font-bold text-base font-medium text-gray-800 dark:text-white/90">{title}</h3>
+      <div className="card-content">
+        <h3 className="text-xl font-bold">{title}</h3>
       </div>
     </div>
   );

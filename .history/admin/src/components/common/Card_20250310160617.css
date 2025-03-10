@@ -34,9 +34,4 @@
     flex: 1; 
     padding: 1rem;
   }
-
-  .card-footer {
-    margin-top: auto; /* ดัน footer ลงไปอยู่ด้านล่างเสมอ */
-    padding: 1rem;
-  }
   

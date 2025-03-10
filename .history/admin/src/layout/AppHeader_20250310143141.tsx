@@ -443,7 +443,7 @@ const AppHeader: React.FC = () => {
           <div className="hidden lg:block relative">
 
           <div className="relative">
-          {/* <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
+          <span className="absolute -translate-y-1/2 pointer-events-none left-4 top-1/2">
                   <svg
                     className="fill-gray-500 dark:fill-gray-400"
                     width="20"
@@ -459,7 +459,7 @@ const AppHeader: React.FC = () => {
                       fill=""
                     />
                   </svg>
-                </span> */}
+                </span>
 
             <input
               type="text"
@@ -484,15 +484,9 @@ const AppHeader: React.FC = () => {
         </div>
         </div>
 
-        <div className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } items-center justify-between w-full gap-4 px-5 py-4 lg:flex shadow-theme-md lg:justify-end lg:px-0 lg:shadow-none`}
-        >
-                      <div className="flex items-center gap-2 2xsm:gap-3">
+        <div className="flex items-center gap-3">
           <ThemeToggleButton />
-          </div>
           <UserDropdown />
-          
         </div>
       </div>
     </header>

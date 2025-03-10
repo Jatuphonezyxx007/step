@@ -52,7 +52,7 @@ const Card: React.FC<CardProps> = ({ title, image }) => {
         </div>
       )}
       <div className="card-footer">
-        <h3 className="text-xl font-bold text-base font-medium text-gray-800 dark:text-white/90">{title}</h3>
+        <h3 className="text-l font-bold text-base font-medium text-gray-800 dark:text-white/90">{title}</h3>
       </div>
     </div>
   );

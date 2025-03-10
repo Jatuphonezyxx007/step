@@ -262,7 +262,7 @@ export default function Home({ searchQuery }: HomeProps) {
     <>
       <PageMeta title="Step Solution" description="" />
 
-      <div className="grid grid-cols-12 gap-3 md:gap-6 items-stretch mt-4 rounded-2xl">
+      <div className="grid grid-cols-12 gap-3 md:gap-6 items-stretch mt-4 ">
         {products.length > 0 ? (
           products.map((product) => (
             <div

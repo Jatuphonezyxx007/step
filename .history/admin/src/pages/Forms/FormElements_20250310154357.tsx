@@ -86,7 +86,6 @@ import TextAreaInput from "../../components/form/form-elements/TextAreaInput";
 import InputStates from "../../components/form/form-elements/InputStates";
 import PageMeta from "../../components/common/PageMeta";
 import ThreeColumnImageGrid from "../../components/ui/images/ThreeColumnImageGrid";
-import Inputs from "../../components/form/form-elements/Inputs";
 
 export default function FormElements() {
   return (
@@ -95,22 +94,22 @@ export default function FormElements() {
         title="React.js Form Elements Dashboard | TailAdmin - React.js Admin Dashboard Template"
         description="This is React.js Form Elements  Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
       />
-      <PageBreadcrumb pageTitle="เพิ่มรายการสินค้าใหม่" />
+      <PageBreadcrumb pageTitle="From Elements" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <ThreeColumnImageGrid />
-          <DropzoneComponent />
+          <DefaultInputs />
+          <SelectInputs />
+          <TextAreaInput />
+          <InputStates />
         </div>
         <div className="space-y-6">
-          <Inputs />
-          {/* <SelectInputs /> */}
-          {/* <TextAreaInput /> */}
-          {/* <InputStates /> */}
-          {/* <InputGroup /> */}
-          {/* <FileInputExample /> */}
-          {/* <CheckboxComponents /> */}
-          {/* <RadioButtons /> */}
-          {/* <ToggleSwitch /> */}
+          <InputGroup />
+          <FileInputExample />
+          <CheckboxComponents />
+          <RadioButtons />
+          <ToggleSwitch />
+          <DropzoneComponent />
         </div>
       </div>
     </div>

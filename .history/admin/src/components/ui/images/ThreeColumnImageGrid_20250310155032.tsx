@@ -818,7 +818,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
   return (
     <div className="space-y-2">
       {/* <label className="text-gray-700 font-medium">รูปภาพสินค้า</label> */}
-      <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 p-3 dark:bg-white/[0.03]">
+      <div className="grid grid-cols-3 gap-3 bg-gray-100 p-3 rounded-lg">
         {/* ✅ แสดงรูปภาพที่มีอยู่ */}
         {images.map((img, index) => (
           <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">

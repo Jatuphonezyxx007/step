@@ -51,8 +51,8 @@ const Card: React.FC<CardProps> = ({ title, image }) => {
           <img src={image} alt={title} />
         </div>
       )}
-      <div className="card-footer">
-        <h3 className="text-xl font-bold text-base font-medium text-gray-800 dark:text-white/90">{title}</h3>
+      <div className="card-content">
+        <h3 className="text-xl font-bold">{title}</h3>
       </div>
     </div>
   );
