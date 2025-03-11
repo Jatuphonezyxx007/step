@@ -176,21 +176,19 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Edit from "./pages/Forms/EditForm";
-import FormElements from "./pages/Forms/FormElements";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("user") !== null;
   });
 
-  const [searchQuery, setSearchQuery] = useState("");
   let logoutTimer: NodeJS.Timeout | null = null;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     setIsAuthenticated(storedUser !== null);
 
-    // ✅ ฟังก์ชันตั้งค่า Auto Logout
+    // ✅ ตั้งค่า Logout อัตโนมัติหลัง 1 ชั่วโมง (3600000ms)
     const setAutoLogout = () => {
       if (logoutTimer) clearTimeout(logoutTimer);
       logoutTimer = setTimeout(() => {
@@ -199,7 +197,7 @@ export default function App() {
       }, 3600000); // 1 ชั่วโมง
     };
 
-    // ✅ รีเซ็ต Logout Timer เมื่อมีการใช้งาน
+    // ✅ ตรวจจับทุกกิจกรรมของผู้ใช้ (คลิก, กดคีย์บอร์ด, เลื่อนเมาส์)
     const resetTimer = () => {
       setAutoLogout();
     };
@@ -229,25 +227,18 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-
       <Routes>
-        {/* ✅ เช็คการล็อกอิน */}
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/signin" />} />
-
         <Route path="/signin" element={<SignIn onLogin={() => setIsAuthenticated(true)} />} />
-
-        {/* ✅ ย้าย AppHeader ไปอยู่ใน AppLayout */}
         {isAuthenticated ? (
-          <Route element={<AppLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}>
-            <Route path="/dashboard" element={<Home searchQuery={searchQuery} />} />
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Home />} />
             <Route path="/edit-product/:product_id" element={<Edit />} />
-            <Route path="/products" element={<FormElements />} />
             <Route path="/profile" element={<UserProfiles />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/signin" />} />
         )}
-
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>

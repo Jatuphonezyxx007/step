@@ -201,13 +201,11 @@ interface Props {
   setCategoryName: (value: string) => void;
 }
 
-export default function SelectInputs({ 
-  categoryName, setCategoryName, 
-  selectedCategory, setSelectedCategory,
-  isAddingCategory, setIsAddingCategory 
-}) {
+export default function SelectInputs({ categoryName, setCategoryName }: Props) {
   const { product_id } = useParams();
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
 
   // 🔍 โหลดหมวดหมู่จาก API
   useEffect(() => {
@@ -247,7 +245,7 @@ export default function SelectInputs({
           { value: "add_new", label: "➕ เพิ่มหมวดหมู่ใหม่" }, // ✅ เพิ่มตัวเลือกพิเศษ
         ]}
         placeholder="เลือกหมวดหมู่"
-        value={selectedCategory} // ✅ ใช้ค่า category_id
+        value={selectedCategory}
         onChange={handleSelectChange}
         className="dark:bg-dark-900"
       />

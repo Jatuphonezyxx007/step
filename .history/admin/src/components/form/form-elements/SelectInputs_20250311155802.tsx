@@ -201,13 +201,10 @@ interface Props {
   setCategoryName: (value: string) => void;
 }
 
-export default function SelectInputs({ 
-  categoryName, setCategoryName, 
-  selectedCategory, setSelectedCategory,
-  isAddingCategory, setIsAddingCategory 
-}) {
+export default function SelectInputs({ categoryName, setCategoryName, isAddingCategory, setIsAddingCategory }) {
   const { product_id } = useParams();
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState(categoryName);
 
   // 🔍 โหลดหมวดหมู่จาก API
   useEffect(() => {
@@ -225,6 +222,21 @@ export default function SelectInputs({
 
     fetchCategories();
   }, []);
+
+  // 🔍 โหลดข้อมูลหมวดหมู่ของสินค้า เมื่อแก้ไข
+  useEffect(() => {
+    if (product_id) {
+      fetch(`http://localhost:3000/api/products/${product_id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setSelectedCategory(data.product.category_id);
+            setCategoryName(data.product.category_id);
+          }
+        })
+        .catch((err) => console.error("🚨 Error fetching product category:", err));
+    }
+  }, [product_id]);
 
   // 🎯 เมื่อผู้ใช้เลือกหมวดหมู่
   const handleSelectChange = (value: string) => {

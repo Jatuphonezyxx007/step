@@ -117,56 +117,6 @@
 //   );
 // }
 
-// import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-// import { useState, useEffect } from "react";
-// import SignIn from "./pages/AuthPages/SignIn";
-// import NotFound from "./pages/OtherPage/NotFound";
-// import UserProfiles from "./pages/UserProfiles";
-// import AppLayout from "./layout/AppLayout";
-// import { ScrollToTop } from "./components/common/ScrollToTop";
-// import Home from "./pages/Dashboard/Home";
-// import Edit from "./pages/Forms/EditForm";
-// import FormElements from "./pages/Forms/FormElements";
-
-// export default function App() {
-//   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-//     return localStorage.getItem("user") !== null;
-//   });
-
-//   const [searchQuery, setSearchQuery] = useState("");
-
-//   useEffect(() => {
-//     const storedUser = localStorage.getItem("user");
-//     setIsAuthenticated(storedUser !== null);
-//   }, []);
-
-//   return (
-//     <Router>
-//       <ScrollToTop />
-
-//       <Routes>
-//         {/* ✅ เช็คการล็อกอิน */}
-//         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/signin" />} />
-
-//         <Route path="/signin" element={<SignIn onLogin={() => setIsAuthenticated(true)} />} />
-
-//         {/* ✅ ย้าย AppHeader ไปอยู่ใน AppLayout */}
-//         {isAuthenticated ? (
-//           <Route element={<AppLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}>
-//             <Route path="/dashboard" element={<Home searchQuery={searchQuery} />} />
-//             <Route path="/edit-product/:product_id" element={<Edit />} />
-//             <Route path="/profile" element={<UserProfiles />} />
-//             <Route path="/products" element={<FormElements />} />
-//           </Route>
-//         ) : (
-//           <Route path="*" element={<Navigate to="/signin" />} />
-//         )}
-
-//         <Route path="*" element={<NotFound />} />
-//       </Routes>
-//     </Router>
-//   );
-// }
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import SignIn from "./pages/AuthPages/SignIn";
@@ -184,47 +134,11 @@ export default function App() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  let logoutTimer: NodeJS.Timeout | null = null;
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     setIsAuthenticated(storedUser !== null);
-
-    // ✅ ฟังก์ชันตั้งค่า Auto Logout
-    const setAutoLogout = () => {
-      if (logoutTimer) clearTimeout(logoutTimer);
-      logoutTimer = setTimeout(() => {
-        console.log("⏳ ไม่มีการใช้งานนานเกิน 1 ชั่วโมง → ออกจากระบบ");
-        handleLogout();
-      }, 3600000); // 1 ชั่วโมง
-    };
-
-    // ✅ รีเซ็ต Logout Timer เมื่อมีการใช้งาน
-    const resetTimer = () => {
-      setAutoLogout();
-    };
-
-    window.addEventListener("mousemove", resetTimer);
-    window.addEventListener("keydown", resetTimer);
-    window.addEventListener("click", resetTimer);
-    window.addEventListener("scroll", resetTimer);
-
-    setAutoLogout(); // เริ่มต้นนับเวลา
-
-    return () => {
-      if (logoutTimer) clearTimeout(logoutTimer);
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("keydown", resetTimer);
-      window.removeEventListener("click", resetTimer);
-      window.removeEventListener("scroll", resetTimer);
-    };
   }, []);
-
-  // ✅ ฟังก์ชัน Logout
-  const handleLogout = () => {
-    localStorage.removeItem("user"); // ลบข้อมูลผู้ใช้
-    setIsAuthenticated(false); // อัปเดต state
-  };
 
   return (
     <Router>
@@ -241,8 +155,8 @@ export default function App() {
           <Route element={<AppLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}>
             <Route path="/dashboard" element={<Home searchQuery={searchQuery} />} />
             <Route path="/edit-product/:product_id" element={<Edit />} />
-            <Route path="/products" element={<FormElements />} />
             <Route path="/profile" element={<UserProfiles />} />
+            <Route path="/products" element={<FormElements />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/signin" />} />

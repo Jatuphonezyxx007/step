@@ -722,150 +722,21 @@ app.put("/api/products/:product_id", async (req, res) => {
 //     connection.release();
 //   }
 // });
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------
-// app.post("/api/add-product", upload.array("images"), async (req, res) => {
-//   const { product_name, category_name } = req.body;
-//   let details = req.body.details;
-//   const images = req.files;
-
-//   if (!product_name || !category_name) {
-//     return res.status(400).json({ success: false, message: "Product name and category name are required" });
-//   }
-
-//   // แปลง JSON
-//   if (details && typeof details === "string") {
-//     try {
-//       details = JSON.parse(details);
-//     } catch (error) {
-//       console.error("Error parsing details JSON:", error);
-//       details = null;
-//     }
-//   }
-
-//   const connection = await pool.getConnection();
-//   await connection.beginTransaction();
-
-//   try {
-//     // 🟢 ตรวจสอบว่า category มีอยู่แล้วหรือไม่
-//     let category_id;
-//     const [existingCategory] = await connection.query(
-//       "SELECT category_id FROM categories WHERE category_name = ?",
-//       [category_name]
-//     );
-
-//     if (existingCategory.length > 0) {
-//       category_id = existingCategory[0].category_id; // ✅ แก้เป็น category_id
-//     } else {
-//       const [categoryResult] = await connection.query(
-//         "INSERT INTO categories (category_name) VALUES (?)",
-//         [category_name]
-//       );
-//       category_id = categoryResult.insertId;
-//     }
-
-//     // 🟢 เพิ่มสินค้าใหม่
-//     const [productResult] = await connection.query(
-//       "INSERT INTO products (product_name, category_id) VALUES (?, ?)",
-//       [product_name, category_id]
-//     );
-//     const product_id = productResult.insertId;
-
-//     // 🟢 เพิ่มรายละเอียดสินค้า (product_details)
-//     if (details) {
-//       const { detail, installation_type, screen_size } = details;
-
-//       await connection.query(
-//         "INSERT INTO product_details (product_id, detail) VALUES (?, ?)",
-//         [product_id, detail || null]
-//       );
-//     }
-
-//     await connection.commit();
-//     res.status(201).json({ success: true, product_id, category_id, message: "Product and details added successfully" });
-//   } catch (error) {
-//     await connection.rollback();
-//     console.error("🚨 Error inserting product:", error);
-//     res.status(500).json({ success: false, message: "Error adding product" });
-//   } finally {
-//     connection.release();
-//   }
-// });
-// ------------------------------------------------------------------------------------------------------------------------------------------------------------
-// app.post("/api/add-product", upload.array("images"), async (req, res) => {
-//   const { product_name, category_id, category_name } = req.body; // ✅ รับ category_id ด้วย
-//   let details = req.body.details;
-//   const images = req.files;
-
-//   if (!product_name || (!category_id && !category_name)) {
-//     return res.status(400).json({ success: false, message: "Product name and category are required" });
-//   }
-
-//   // แปลง JSON
-//   if (details && typeof details === "string") {
-//     try {
-//       details = JSON.parse(details);
-//     } catch (error) {
-//       console.error("Error parsing details JSON:", error);
-//       details = null;
-//     }
-//   }
-
-//   const connection = await pool.getConnection();
-//   await connection.beginTransaction();
-
-//   try {
-//     let finalCategoryId = category_id; // ✅ ใช้ category_id ที่มีอยู่ ถ้ามี
-
-//     if (!finalCategoryId) {
-//       // ✅ ถ้าไม่มี category_id ให้เพิ่มหมวดหมู่ใหม่
-//       const [categoryResult] = await connection.query(
-//         "INSERT INTO categories (category_name) VALUES (?)",
-//         [category_name]
-//       );
-//       finalCategoryId = categoryResult.insertId;
-//     }
-
-//     // 🟢 เพิ่มสินค้าใหม่
-//     const [productResult] = await connection.query(
-//       "INSERT INTO products (product_name, category_id) VALUES (?, ?)",
-//       [product_name, finalCategoryId]
-//     );
-//     const product_id = productResult.insertId;
-
-//     // 🟢 เพิ่มรายละเอียดสินค้า
-//     if (details) {
-//       const { detail } = details;
-//       await connection.query(
-//         "INSERT INTO product_details (product_id, detail) VALUES (?, ?)",
-//         [product_id, detail || null]
-//       );
-//     }
-
-//     await connection.commit();
-//     res.status(201).json({ success: true, product_id, category_id: finalCategoryId, message: "Product added successfully" });
-//   } catch (error) {
-//     await connection.rollback();
-//     console.error("🚨 Error inserting product:", error);
-//     res.status(500).json({ success: false, message: "Error adding product" });
-//   } finally {
-//     connection.release();
-//   }
-// });
-app.post("/api/add-product", upload.array("images"), async (req, res) => { 
-  const { product_name, category_id, category_name } = req.body; // ✅ รับ category_id และ category_name
+app.post("/api/add-product", upload.array("images"), async (req, res) => {
+  const { product_name, category_name } = req.body;
   let details = req.body.details;
   const images = req.files;
 
-  if (!product_name || (!category_id && !category_name)) {
-    return res.status(400).json({ success: false, message: "Product name and category are required" });
+  if (!product_name || !category_name) {
+    return res.status(400).json({ success: false, message: "Product name and category name are required" });
   }
 
-  // 🔍 แปลง JSON ของ `details`
+  // แปลง JSON
   if (details && typeof details === "string") {
     try {
       details = JSON.parse(details);
     } catch (error) {
-      console.error("🚨 Error parsing details JSON:", error);
+      console.error("Error parsing details JSON:", error);
       details = null;
     }
   }
@@ -874,34 +745,42 @@ app.post("/api/add-product", upload.array("images"), async (req, res) => {
   await connection.beginTransaction();
 
   try {
-    let finalCategoryId = category_id; // ✅ ใช้ category_id ถ้ามี
+    // 🟢 ตรวจสอบว่า category มีอยู่แล้วหรือไม่
+    let category_id;
+    const [existingCategory] = await connection.query(
+      "SELECT category_id FROM categories WHERE category_name = ?",
+      [category_name]
+    );
 
-    if (!finalCategoryId) {
-      // ✅ ถ้าไม่มี category_id ให้เพิ่มหมวดหมู่ใหม่
+    if (existingCategory.length > 0) {
+      category_id = existingCategory[0].category_id; // ✅ แก้เป็น category_id
+    } else {
       const [categoryResult] = await connection.query(
         "INSERT INTO categories (category_name) VALUES (?)",
         [category_name]
       );
-      finalCategoryId = categoryResult.insertId;
+      category_id = categoryResult.insertId;
     }
 
     // 🟢 เพิ่มสินค้าใหม่
     const [productResult] = await connection.query(
       "INSERT INTO products (product_name, category_id) VALUES (?, ?)",
-      [product_name, finalCategoryId]
+      [product_name, category_id]
     );
     const product_id = productResult.insertId;
 
     // 🟢 เพิ่มรายละเอียดสินค้า (product_details)
-    if (details && details.detail) { // ✅ ตรวจสอบว่ามีค่า
+    if (details) {
+      const { detail, installation_type, screen_size } = details;
+
       await connection.query(
-        "INSERT INTO product_details (product_id, detail) VALUES (?, ?)",
-        [product_id, details.detail]
+        "INSERT INTO product_details (product_id, detail, installation_type, screen_size) VALUES (?, ?, ?, ?)",
+        [product_id, detail || null, installation_type || null, screen_size || null]
       );
     }
 
     await connection.commit();
-    res.status(201).json({ success: true, product_id, category_id: finalCategoryId, message: "Product and details added successfully" });
+    res.status(201).json({ success: true, product_id, category_id, message: "Product and details added successfully" });
   } catch (error) {
     await connection.rollback();
     console.error("🚨 Error inserting product:", error);

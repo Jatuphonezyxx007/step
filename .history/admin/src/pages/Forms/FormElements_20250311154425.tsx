@@ -282,47 +282,53 @@ export default function ProductForm() {
   // ✅ ตั้งค่า state สำหรับฟอร์ม
   const [productName, setProductName] = useState("");
   const [productDetail, setProductDetail] = useState("");
+  const [installationType, setInstallationType] = useState("");
+  const [screenSize, setScreenSize] = useState("");
   const [categoryName, setCategoryName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ ใช้ category_id
-  const [isAddingCategory, setIsAddingCategory] = useState(false); // ✅ เพิ่มตัวแปรนี้
-  const [tempImages, setTempImages] = useState<File[]>([]);
+  const [tempImages, setTempImages] = useState<File[]>([]); // เก็บไฟล์ที่เลือก
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!productName.trim() || (!categoryName.trim() && !selectedCategory)) {
-      alert("กรุณากรอกชื่อสินค้าและเลือกหมวดหมู่");
+    if (!productName.trim() || !categoryName.trim()) {
+      alert("กรุณากรอกชื่อสินค้าและหมวดหมู่");
       return;
     }
 
-    // ✅ สร้าง `FormData`
+    // ✅ สร้าง `FormData` เพื่อส่งข้อมูลไปยัง API
     const formData = new FormData();
     formData.append("product_name", productName.trim());
+    formData.append("category_name", categoryName.trim());
 
-    if (isAddingCategory) {
-      formData.append("category_name", categoryName.trim()); // ✅ ใช้ category_name ถ้าเพิ่มใหม่
-    } else {
-      formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
-    }
-
-    // ✅ เพิ่มรายละเอียดสินค้า
+    // ✅ แปลง `details` เป็น JSON string และแน่ใจว่ามีค่าจริง
     const details = JSON.stringify({
-      detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
+      detail: productDetail?.trim() || "",
+      installation_type: installationType?.trim() || "",
+      screen_size: screenSize?.trim() || "",
     });
+
     formData.append("details", details);
 
-    // ✅ ส่งข้อมูลไป API
-    const response = await fetch("http://localhost:3000/api/add-product", {
-      method: "POST",
-      body: formData,
+    // ✅ เพิ่มรูปภาพลง `FormData`
+    tempImages.forEach((image, index) => {
+      formData.append("images", image, `image_${index + 1}.png`);
     });
 
-    const data = await response.json();
-    if (data.success) {
-      alert("เพิ่มสินค้าสำเร็จ!");
-      navigate("/dashboard");
-    } else {
-      console.error("เกิดข้อผิดพลาด:", data.message);
+    try {
+      const response = await fetch("http://localhost:3000/api/add-product", {
+        method: "POST",
+        body: formData, // ❗ ต้องใช้ `FormData`
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("เพิ่มสินค้าสำเร็จ!");
+        navigate("/dashboard"); // ✅ กลับไปหน้า dashboard
+      } else {
+        console.error("เกิดข้อผิดพลาด:", data.message);
+      }
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการส่งข้อมูล:", error);
     }
 };
 
@@ -337,18 +343,14 @@ export default function ProductForm() {
           </ComponentCard>
         </div>
         <form onSubmit={handleSubmit}>
-          <Inputs
-            productName={productName}
-            setProductName={setProductName}
-            productDetail={productDetail}
-            setProductDetail={setProductDetail}
-            categoryName={categoryName}
-            setCategoryName={setCategoryName}
-            selectedCategory={selectedCategory} // ✅ ส่งค่า category_id
-            setSelectedCategory={setSelectedCategory} // ✅ เพิ่มฟังก์ชัน setSelectedCategory
-            isAddingCategory={isAddingCategory} // ✅ ส่ง isAddingCategory ไป
-            setIsAddingCategory={setIsAddingCategory} // ✅ ส่ง setIsAddingCategory ไป
-          />
+        <Inputs
+  productName={productName}
+  setProductName={setProductName}
+  productDetail={productDetail}
+  setProductDetail={setProductDetail}
+  categoryName={categoryName} // ✅ ใช้ categoryName ที่อัปเดต
+  setCategoryName={setCategoryName}
+/>
           <br />
           <div className="flex items-center justify-end gap-5">
             <Button type="submit" size="sm" variant="primary">

@@ -157,23 +157,14 @@ import ComponentCard from "../../common/ComponentCard";
 export default function Inputs({ 
   productName, setProductName, 
   productDetail, setProductDetail, 
-  categoryName, setCategoryName,
-  selectedCategory, setSelectedCategory,
-  isAddingCategory, setIsAddingCategory 
+  categoryName, setCategoryName
 }) {
   return (
     <div>
       <ComponentCard title="รายละเอียดสินค้า">
         <DefaultInputs productName={productName} setProductName={setProductName} />
-        <TextAreaInput productDetail={productDetail} setProductDetail={setProductDetail} /> {/* ✅ ตรวจสอบการส่งค่า */}
-        <SelectInputs 
-          categoryName={categoryName} 
-          setCategoryName={setCategoryName}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          isAddingCategory={isAddingCategory} 
-          setIsAddingCategory={setIsAddingCategory} 
-        />
+        <TextAreaInput productDetail={productDetail} setProductDetail={setProductDetail} />
+        <SelectInputs categoryName={categoryName} setCategoryName={setCategoryName} />
       </ComponentCard>
     </div>
   );

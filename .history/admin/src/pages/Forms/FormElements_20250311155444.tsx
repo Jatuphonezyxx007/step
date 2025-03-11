@@ -282,10 +282,10 @@ export default function ProductForm() {
   // ✅ ตั้งค่า state สำหรับฟอร์ม
   const [productName, setProductName] = useState("");
   const [productDetail, setProductDetail] = useState("");
+  const [installationType, setInstallationType] = useState("");
+  const [screenSize, setScreenSize] = useState("");
   const [categoryName, setCategoryName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ ใช้ category_id
-  const [isAddingCategory, setIsAddingCategory] = useState(false); // ✅ เพิ่มตัวแปรนี้
-  const [tempImages, setTempImages] = useState<File[]>([]);
+  const [tempImages, setTempImages] = useState<File[]>([]); // เก็บไฟล์ที่เลือก
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,12 +304,6 @@ export default function ProductForm() {
     } else {
       formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
     }
-
-    // ✅ เพิ่มรายละเอียดสินค้า
-    const details = JSON.stringify({
-      detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
-    });
-    formData.append("details", details);
 
     // ✅ ส่งข้อมูลไป API
     const response = await fetch("http://localhost:3000/api/add-product", {
@@ -337,18 +331,14 @@ export default function ProductForm() {
           </ComponentCard>
         </div>
         <form onSubmit={handleSubmit}>
-          <Inputs
-            productName={productName}
-            setProductName={setProductName}
-            productDetail={productDetail}
-            setProductDetail={setProductDetail}
-            categoryName={categoryName}
-            setCategoryName={setCategoryName}
-            selectedCategory={selectedCategory} // ✅ ส่งค่า category_id
-            setSelectedCategory={setSelectedCategory} // ✅ เพิ่มฟังก์ชัน setSelectedCategory
-            isAddingCategory={isAddingCategory} // ✅ ส่ง isAddingCategory ไป
-            setIsAddingCategory={setIsAddingCategory} // ✅ ส่ง setIsAddingCategory ไป
-          />
+        <Inputs
+  productName={productName}
+  setProductName={setProductName}
+  productDetail={productDetail}
+  setProductDetail={setProductDetail}
+  categoryName={categoryName} // ✅ ใช้ categoryName ที่อัปเดต
+  setCategoryName={setCategoryName}
+/>
           <br />
           <div className="flex items-center justify-end gap-5">
             <Button type="submit" size="sm" variant="primary">

@@ -276,78 +276,156 @@ import DropZone from "../../components/form/form-elements/DropZone";
 import ThreeColumnImageGrid from "../../components/ui/images/ThreeColumnImageGrid";
 import Inputs from "../../components/form/form-elements/Inputs";
 
-export default function ProductForm() {
-  const navigate = useNavigate();
-
-  // ✅ ตั้งค่า state สำหรับฟอร์ม
+export default function AddProductForm() {
   const [productName, setProductName] = useState("");
   const [productDetail, setProductDetail] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ ใช้ category_id
-  const [isAddingCategory, setIsAddingCategory] = useState(false); // ✅ เพิ่มตัวแปรนี้
-  const [tempImages, setTempImages] = useState<File[]>([]);
+  const [installationType, setInstallationType] = useState("");
+  const [screenSize, setScreenSize] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [newCategory, setNewCategory] = useState(""); // 🎯 เก็บค่าหมวดหมู่ใหม่
+  const [categories, setCategories] = useState([]);
+  const [tempImages, setTempImages] = useState([]);
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    fetch("http://localhost:3000/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCategories(data.categories.map((cat) => ({ value: cat.category_id, label: cat.category_name })));
+        }
+      })
+      .catch((err) => console.error("Error fetching categories:", err));
+  }, []);
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   const formData = new FormData();
+  //   formData.append("product_name", productName.trim());
+  //   formData.append("detail", productDetail.trim());
+  //   formData.append("installation_type", installationType.trim());
+  //   formData.append("screen_size", screenSize.trim());
+    
+  //   // ✅ หากผู้ใช้พิมพ์หมวดหมู่ใหม่ ให้ใช้ newCategory
+  //   formData.append("category_name", newCategory.trim() || selectedCategory);
+
+  //   // 🖼️ อัปโหลดรูปภาพ
+  //   tempImages.forEach((img, index) => {
+  //     if (img.fileBuffer) {
+  //       formData.append("images", img.fileBuffer, `image_${index}.png`);
+  //     }
+  //   });
+
+  //   try {
+  //     const response = await fetch("http://localhost:3000/api/products", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+
+  //     const data = await response.json();
+  //     if (data.success) {
+  //       console.log("✅ Product added successfully!");
+  //       navigate("/dashboard");
+  //     } else {
+  //       console.error("❌ Error adding product:", data.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("🚨 Error adding product:", error);
+  //   }
+  // };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!productName.trim() || (!categoryName.trim() && !selectedCategory)) {
-      alert("กรุณากรอกชื่อสินค้าและเลือกหมวดหมู่");
-      return;
-    }
-
-    // ✅ สร้าง `FormData`
+  
+    // 📝 สร้าง FormData สำหรับสินค้า (ยังไม่รวมรูป)
     const formData = new FormData();
     formData.append("product_name", productName.trim());
-
-    if (isAddingCategory) {
-      formData.append("category_name", categoryName.trim()); // ✅ ใช้ category_name ถ้าเพิ่มใหม่
-    } else {
-      formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
-    }
-
-    // ✅ เพิ่มรายละเอียดสินค้า
-    const details = JSON.stringify({
-      detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
-    });
-    formData.append("details", details);
-
-    // ✅ ส่งข้อมูลไป API
-    const response = await fetch("http://localhost:3000/api/add-product", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      alert("เพิ่มสินค้าสำเร็จ!");
+    formData.append("detail", productDetail.trim());
+    formData.append("installation_type", installationType.trim());
+    formData.append("screen_size", screenSize.trim());
+  
+    // ✅ หากผู้ใช้พิมพ์หมวดหมู่ใหม่ ให้ใช้ newCategory
+    formData.append("category_name", newCategory.trim() || selectedCategory);
+  
+    try {
+      // 🆕 1️⃣ เพิ่มสินค้าใหม่ก่อน
+      const response = await fetch("http://localhost:3000/api/products", {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await response.json();
+      if (!data.success) {
+        console.error("❌ Error adding product:", data.message);
+        return;
+      }
+  
+      const product_id = data.product_id;
+      console.log("✅ Product added successfully! ID:", product_id);
+  
+      // 🖼️ 2️⃣ เริ่มอัปโหลดรูปภาพ (เฉพาะหลังจากที่ได้ `product_id`)
+      if (tempImages.length > 0) {
+        const uploadPromises = tempImages.map(async (img, index) => {
+          if (!img.fileBuffer) return;
+  
+          const imageData = new FormData();
+          imageData.append("product_id", product_id);
+          imageData.append("image", img.fileBuffer, `image_${index}.png`);
+  
+          await fetch("http://localhost:3000/api/upload-image-temp", {
+            method: "POST",
+            body: imageData,
+          });
+        });
+  
+        await Promise.all(uploadPromises);
+        console.log("✅ All images uploaded successfully!");
+      }
+  
+      // 🔄 3️⃣ บันทึกรูปภาพจริง
+      const saveImagesResponse = await fetch("http://localhost:3000/api/save-images", {
+        method: "POST",
+        body: JSON.stringify({ product_id }),
+        headers: { "Content-Type": "application/json" },
+      });
+  
+      const saveImagesData = await saveImagesResponse.json();
+      if (saveImagesData.success) {
+        console.log("✅ Images saved successfully!");
+      } else {
+        console.error("❌ Error saving images:", saveImagesData.message);
+      }
+  
+      // ✅ เปลี่ยนเส้นทางไปยัง Dashboard
       navigate("/dashboard");
-    } else {
-      console.error("เกิดข้อผิดพลาด:", data.message);
+  
+    } catch (error) {
+      console.error("🚨 Error adding product:", error);
     }
-};
+  };
+  
+
 
   return (
     <div>
-      <PageMeta title="เพิ่มสินค้าใหม่" description="ฟอร์มเพิ่มสินค้า" />
+      <PageMeta title="เพิ่มสินค้าใหม่" description="เพิ่มรายการสินค้าใหม่ลงในระบบ" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <ComponentCard title="รูปภาพสินค้า">
             <ThreeColumnImageGrid onImagesUpdate={setTempImages} />
-            <DropZone onDrop={setTempImages} />
+            <DropZone />
           </ComponentCard>
         </div>
         <form onSubmit={handleSubmit}>
-          <Inputs
+          <Inputs 
             productName={productName}
             setProductName={setProductName}
             productDetail={productDetail}
             setProductDetail={setProductDetail}
-            categoryName={categoryName}
-            setCategoryName={setCategoryName}
-            selectedCategory={selectedCategory} // ✅ ส่งค่า category_id
-            setSelectedCategory={setSelectedCategory} // ✅ เพิ่มฟังก์ชัน setSelectedCategory
-            isAddingCategory={isAddingCategory} // ✅ ส่ง isAddingCategory ไป
-            setIsAddingCategory={setIsAddingCategory} // ✅ ส่ง setIsAddingCategory ไป
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            newCategory={newCategory}
+            setNewCategory={setNewCategory}
           />
           <br />
           <div className="flex items-center justify-end gap-5">

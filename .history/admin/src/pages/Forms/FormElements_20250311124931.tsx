@@ -268,7 +268,7 @@
 //   );
 // }
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import Button from "../../components/ui/button/Button";
 import ComponentCard from "../../components/common/ComponentCard";
@@ -277,63 +277,100 @@ import ThreeColumnImageGrid from "../../components/ui/images/ThreeColumnImageGri
 import Inputs from "../../components/form/form-elements/Inputs";
 
 export default function ProductForm() {
+  const { product_id } = useParams(); // รับค่า product_id ถ้ามี
   const navigate = useNavigate();
 
-  // ✅ ตั้งค่า state สำหรับฟอร์ม
   const [productName, setProductName] = useState("");
   const [productDetail, setProductDetail] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ ใช้ category_id
-  const [isAddingCategory, setIsAddingCategory] = useState(false); // ✅ เพิ่มตัวแปรนี้
-  const [tempImages, setTempImages] = useState<File[]>([]);
+  const [installationType, setInstallationType] = useState("");
+  const [screenSize, setScreenSize] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [tempImages, setTempImages] = useState([]);
+
+  useEffect(() => {
+    fetch("http://localhost:3000/api/categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCategories(data.categories.map((cat) => ({ value: cat.category_id, label: cat.category_name })));
+        }
+      })
+      .catch((err) => console.error("Error fetching categories:", err));
+  }, []);
+
+  // ✅ โหลดข้อมูลสินค้าเมื่อ `product_id` มีค่า
+  useEffect(() => {
+    if (!product_id) return;
+    fetch(`http://localhost:3000/api/products/${product_id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setProductName(data.product.product_name);
+          setProductDetail(data.product.detail || "");
+          setInstallationType(data.product.installation_type || "");
+          setScreenSize(data.product.screen_size || "");
+          setSelectedCategory(String(data.product.category_id));
+          setTempImages(data.product.supplementary_images || []);
+        }
+      })
+      .catch((err) => console.error("Error fetching product:", err));
+  }, [product_id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!productName.trim() || (!categoryName.trim() && !selectedCategory)) {
-      alert("กรุณากรอกชื่อสินค้าและเลือกหมวดหมู่");
+    console.log("📌 Sending Data:");
+    console.log("product_name:", productName);
+    console.log("selectedCategory:", selectedCategory);
+
+    if (!productName.trim() || !selectedCategory) {
+      console.error("❌ ข้อมูลไม่ครบถ้วน: ชื่อสินค้าและหมวดหมู่จำเป็นต้องระบุ");
       return;
     }
 
-    // ✅ สร้าง `FormData`
-    const formData = new FormData();
-    formData.append("product_name", productName.trim());
+    const formData = {
+      product_name: productName.trim(),
+      detail: productDetail.trim(),
+      installation_type: installationType.trim(),
+      screen_size: screenSize.trim(),
+      category_id: selectedCategory,
+    };
 
-    if (isAddingCategory) {
-      formData.append("category_name", categoryName.trim()); // ✅ ใช้ category_name ถ้าเพิ่มใหม่
-    } else {
-      formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
-    }
+    try {
+      let response;
+      if (product_id) {
+        response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+      } else {
+        response = await fetch("http://localhost:3000/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+      }
 
-    // ✅ เพิ่มรายละเอียดสินค้า
-    const details = JSON.stringify({
-      detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
-    });
-    formData.append("details", details);
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message);
 
-    // ✅ ส่งข้อมูลไป API
-    const response = await fetch("http://localhost:3000/api/add-product", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      alert("เพิ่มสินค้าสำเร็จ!");
-      navigate("/dashboard");
-    } else {
-      console.error("เกิดข้อผิดพลาด:", data.message);
+      console.log("✅ Success:", data);
+      navigate("/dashboard"); 
+    } catch (error) {
+      console.error("❌ Error:", error);
     }
 };
 
   return (
     <div>
-      <PageMeta title="เพิ่มสินค้าใหม่" description="ฟอร์มเพิ่มสินค้า" />
+      <PageMeta title={product_id ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"} description="ฟอร์มเพิ่ม/แก้ไขสินค้า" />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <ComponentCard title="รูปภาพสินค้า">
             <ThreeColumnImageGrid onImagesUpdate={setTempImages} />
-            <DropZone onDrop={setTempImages} />
+            <DropZone />
           </ComponentCard>
         </div>
         <form onSubmit={handleSubmit}>
@@ -342,17 +379,13 @@ export default function ProductForm() {
             setProductName={setProductName}
             productDetail={productDetail}
             setProductDetail={setProductDetail}
-            categoryName={categoryName}
-            setCategoryName={setCategoryName}
-            selectedCategory={selectedCategory} // ✅ ส่งค่า category_id
-            setSelectedCategory={setSelectedCategory} // ✅ เพิ่มฟังก์ชัน setSelectedCategory
-            isAddingCategory={isAddingCategory} // ✅ ส่ง isAddingCategory ไป
-            setIsAddingCategory={setIsAddingCategory} // ✅ ส่ง setIsAddingCategory ไป
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
           />
           <br />
           <div className="flex items-center justify-end gap-5">
             <Button type="submit" size="sm" variant="primary">
-              บันทึกข้อมูล
+              {product_id ? "อัปเดตสินค้า" : "บันทึกข้อมูล"}
             </Button>
           </div>
         </form>

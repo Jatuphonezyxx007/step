@@ -189,80 +189,32 @@
 //     </div>
 //   );
 // }
-"use client";
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React from "react";
 import Label from "../Label";
 import Select from "../Select";
-import Input from "../input/InputField"; // ✅ เพิ่ม input field
 
 interface Props {
   categoryName: string;
   setCategoryName: (value: string) => void;
 }
 
-export default function SelectInputs({ 
-  categoryName, setCategoryName, 
-  selectedCategory, setSelectedCategory,
-  isAddingCategory, setIsAddingCategory 
-}) {
-  const { product_id } = useParams();
-  const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
-
-  // 🔍 โหลดหมวดหมู่จาก API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/categories");
-        const data = await response.json();
-        if (data.success) {
-          setCategories(data.categories);
-        }
-      } catch (error) {
-        console.error("🚨 Error fetching categories:", error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  // 🎯 เมื่อผู้ใช้เลือกหมวดหมู่
+export default function SelectInputs({ categoryName, setCategoryName }: Props) {
   const handleSelectChange = (value: string) => {
-    if (value === "add_new") {
-      setIsAddingCategory(true);
-      setCategoryName(""); // ล้างค่าหมวดหมู่เก่า
-    } else {
-      setIsAddingCategory(false);
-      setCategoryName(value);
-    }
-    setSelectedCategory(value);
+    console.log("🔍 หมวดหมู่ที่เลือก:", value);
+    setCategoryName(value);
   };
 
   return (
-    <div className="space-y-4">
-      <Label>หมวดหมู่</Label>
-      <Select
-        options={[
-          ...categories,
-          { value: "add_new", label: "➕ เพิ่มหมวดหมู่ใหม่" }, // ✅ เพิ่มตัวเลือกพิเศษ
-        ]}
-        placeholder="เลือกหมวดหมู่"
-        value={selectedCategory} // ✅ ใช้ค่า category_id
-        onChange={handleSelectChange}
-        className="dark:bg-dark-900"
-      />
-
-      {isAddingCategory && (
-        <div>
-          <Label>ชื่อหมวดหมู่ใหม่</Label>
-          <Input
-            type="text"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="กรอกชื่อหมวดหมู่ใหม่"
-          />
-        </div>
-      )}
+    <div className="space-y-6">
+      <div>
+        <Label>หมวดหมู่</Label>
+        <Select
+          options={[{ value: "1", label: "หมวดหมู่ 1" }, { value: "2", label: "หมวดหมู่ 2" }]} // ✅ แก้ไขตรงนี้ให้ดึงจาก API
+          placeholder="เลือกหมวดหมู่"
+          value={categoryName} 
+          onChange={handleSelectChange}
+        />
+      </div>
     </div>
   );
 }

@@ -159,20 +159,20 @@ export default function Inputs({
   productDetail, setProductDetail, 
   categoryName, setCategoryName,
   selectedCategory, setSelectedCategory,
-  isAddingCategory, setIsAddingCategory 
+  isAddingCategory, setIsAddingCategory // ✅ เพิ่ม state
 }) {
   return (
     <div>
       <ComponentCard title="รายละเอียดสินค้า">
         <DefaultInputs productName={productName} setProductName={setProductName} />
-        <TextAreaInput productDetail={productDetail} setProductDetail={setProductDetail} /> {/* ✅ ตรวจสอบการส่งค่า */}
+        <TextAreaInput productDetail={productDetail} setProductDetail={setProductDetail} />
         <SelectInputs 
           categoryName={categoryName} 
           setCategoryName={setCategoryName}
           selectedCategory={selectedCategory}
           setSelectedCategory={setSelectedCategory}
-          isAddingCategory={isAddingCategory} 
-          setIsAddingCategory={setIsAddingCategory} 
+          isAddingCategory={isAddingCategory} // ✅ ส่งค่าไป
+          setIsAddingCategory={setIsAddingCategory} // ✅ ส่งค่าไป
         />
       </ComponentCard>
     </div>

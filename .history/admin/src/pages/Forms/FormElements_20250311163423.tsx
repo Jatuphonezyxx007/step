@@ -282,6 +282,8 @@ export default function ProductForm() {
   // ✅ ตั้งค่า state สำหรับฟอร์ม
   const [productName, setProductName] = useState("");
   const [productDetail, setProductDetail] = useState("");
+  // const [installationType, setInstallationType] = useState("");
+  // const [screenSize, setScreenSize] = useState("");
   const [categoryName, setCategoryName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(""); // ✅ ใช้ category_id
   const [isAddingCategory, setIsAddingCategory] = useState(false); // ✅ เพิ่มตัวแปรนี้
@@ -305,12 +307,6 @@ export default function ProductForm() {
       formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
     }
 
-    // ✅ เพิ่มรายละเอียดสินค้า
-    const details = JSON.stringify({
-      detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
-    });
-    formData.append("details", details);
-
     // ✅ ส่งข้อมูลไป API
     const response = await fetch("http://localhost:3000/api/add-product", {
       method: "POST",
@@ -324,7 +320,7 @@ export default function ProductForm() {
     } else {
       console.error("เกิดข้อผิดพลาด:", data.message);
     }
-};
+  };
 
   return (
     <div>

@@ -241,8 +241,8 @@ export default function App() {
           <Route element={<AppLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}>
             <Route path="/dashboard" element={<Home searchQuery={searchQuery} />} />
             <Route path="/edit-product/:product_id" element={<Edit />} />
-            <Route path="/products" element={<FormElements />} />
             <Route path="/profile" element={<UserProfiles />} />
+            <Route path="/products" element={<FormElements />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/signin" />} />
