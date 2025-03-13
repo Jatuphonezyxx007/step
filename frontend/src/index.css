@@ -3,5 +3,11 @@
 @tailwind utilities;
 
 body {
-    font-family: 'Mitr', sans-serif;
+  @apply font-prompt;
 }
+
+/* footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+} */
