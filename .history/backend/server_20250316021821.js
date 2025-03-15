@@ -693,33 +693,20 @@ app.delete("/api/products/:product_id", async (req, res) => {
 
 app.post("/api/update-image", upload.single("image"), async (req, res) => {
   try {
-    const { product_id, old_filename, image_index } = req.body;
+    const { product_id, old_filename } = req.body;
 
-    if (!req.file || !product_id || !old_filename || image_index === undefined) {
+    if (!req.file || !product_id || !old_filename) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
     // ตรวจสอบว่าไฟล์เดิมมีอยู่ในฐานข้อมูลหรือไม่
-    if (image_index === 0) {
-      // ตรวจสอบภาพแรกในตาราง products
-      const [existingImage] = await pool.query(
-        "SELECT images_main FROM products WHERE product_id = ?",
-        [product_id]
-      );
+    const [existingImage] = await pool.query(
+      "SELECT * FROM product_images WHERE path = ? AND product_id = ?",
+      [old_filename, product_id]
+    );
 
-      if (!existingImage.length || existingImage[0].images_main !== old_filename) {
-        return res.status(404).json({ success: false, message: "Image not found" });
-      }
-    } else {
-      // ตรวจสอบภาพอื่นในตาราง product_images
-      const [existingImage] = await pool.query(
-        "SELECT path FROM product_images WHERE path = ? AND product_id = ?",
-        [old_filename, product_id]
-      );
-
-      if (existingImage.length === 0) {
-        return res.status(404).json({ success: false, message: "Image not found" });
-      }
+    if (existingImage.length === 0) {
+      return res.status(404).json({ success: false, message: "Image not found" });
     }
 
     // ลบไฟล์เดิมออกจากเซิร์ฟเวอร์
@@ -736,20 +723,11 @@ app.post("/api/update-image", upload.single("image"), async (req, res) => {
     fs.writeFileSync(newFilePath, req.file.buffer);
 
     // อัปเดตข้อมูลในฐานข้อมูล
-    if (image_index === 0) {
-      // อัปเดตตาราง products สำหรับภาพแรก
-      await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [
-        newFilename,
-        product_id,
-      ]);
-    } else {
-      // อัปเดตตาราง product_images สำหรับภาพอื่น
-      await pool.query("UPDATE product_images SET path = ? WHERE path = ? AND product_id = ?", [
-        newFilename,
-        old_filename,
-        product_id,
-      ]);
-    }
+    await pool.query("UPDATE product_images SET path = ? WHERE path = ? AND product_id = ?", [
+      newFilename,
+      old_filename,
+      product_id,
+    ]);
 
     res.status(200).json({ success: true, filename: newFilename, fileBuffer: req.file.buffer.toString("base64") });
   } catch (error) {
@@ -757,6 +735,8 @@ app.post("/api/update-image", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false, message: "Error updating image" });
   }
 });
+
+
 
 app.delete("/api/delete-image", async (req, res) => {
   const { filename, product_id } = req.body;

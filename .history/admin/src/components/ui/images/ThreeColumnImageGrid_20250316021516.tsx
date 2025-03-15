@@ -855,12 +855,6 @@
 //     </div>
 //   );
 //   }
-
-
-
-
-
-//Code DeepSeek
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -1038,86 +1032,3 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     </div>
   );
 }
-
-
-
-
-// "use client";
-// import React, { useEffect, useState } from "react";
-// import { useParams } from "react-router-dom";
-
-// export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
-//   const { product_id } = useParams();
-//   const [images, setImages] = useState<{ filename: string; fileBuffer?: string; isEdited?: boolean }[]>([]);
-//   const [loading, setLoading] = useState(false);
-
-//   useEffect(() => {
-//     const fetchExistingImages = async () => {
-//       if (!product_id) return;
-//       try {
-//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-//         const data = await response.json();
-
-//         if (data.success) {
-//           const existingImages = [];
-
-//           if (data.product.images_main) {
-//             existingImages.push({
-//               filename: data.product.images_main,
-//               fileBuffer: `/products/${data.product.images_main}`,
-//             });
-//           }
-
-//           if (data.product.supplementary_images) {
-//             data.product.supplementary_images.forEach((img) => {
-//               existingImages.push({
-//                 filename: img,
-//                 fileBuffer: `/products/${img}`,
-//               });
-//             });
-//           }
-
-//           setImages(existingImages);
-//           onImagesUpdate(existingImages);
-//         }
-//       } catch (error) {
-//         console.error("🚨 Error fetching images:", error);
-//       }
-//     };
-
-//     fetchExistingImages();
-//   }, [product_id]);
-
-//   const handleEditImage = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = event.target.files?.[0];
-//     if (!file) return;
-
-//     const reader = new FileReader();
-//     reader.onload = () => {
-//       const newImage = { filename: file.name, fileBuffer: reader.result as string, isEdited: true };
-//       const updatedImages = [...images];
-//       updatedImages[index] = newImage;
-//       setImages(updatedImages);
-//       onImagesUpdate(updatedImages);
-//     };
-//     reader.readAsDataURL(file);
-//   };
-
-//   return (
-//     <div className="space-y-2">
-//       <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white p-3">
-//         {images.map((img, index) => (
-//           <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">
-//             <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
-//             <div className="absolute top-1 right-1 flex gap-1">
-//               <label className="bg-white p-1 rounded-full cursor-pointer">
-//                 <span className="material-icons text-gray-600 text-sm">edit</span>
-//                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEditImage(index, e)} />
-//               </label>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }

@@ -991,20 +991,18 @@ export default function EditForm() {
 
       // ✅ อัปโหลดรูปภาพที่แก้ไข
       if (tempImages.some((img) => img.isEdited)) {
-        for (let index = 0; index < tempImages.length; index++) {
-          const img = tempImages[index];
+        for (const img of tempImages) {
           if (img.isEdited) {
             const formData = new FormData();
             formData.append("image", dataURLtoBlob(img.fileBuffer));
             formData.append("product_id", product_id);
             formData.append("old_filename", img.filename);
-            formData.append("image_index", index.toString()); // ส่ง index ของภาพ
-  
+
             const response = await fetch(`http://localhost:3000/api/update-image`, {
               method: "POST",
               body: formData,
             });
-  
+
             const data = await response.json();
             if (!data.success) {
               console.error("❌ Upload failed:", data.message);

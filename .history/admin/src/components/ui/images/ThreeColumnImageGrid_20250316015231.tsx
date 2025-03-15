@@ -855,12 +855,6 @@
 //     </div>
 //   );
 //   }
-
-
-
-
-
-//Code DeepSeek
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -961,21 +955,40 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     const file = event.target.files?.[0];
     if (!file) return;
   
-    const reader = new FileReader();
-    reader.onload = () => {
-      const newImage = { filename: file.name, fileBuffer: reader.result as string, isEdited: true }; // เพิ่ม flag isEdited
-      const updatedImages = [...images];
-      updatedImages[index] = newImage;
-      setImages(updatedImages);
-      onImagesUpdate(updatedImages); // ส่งข้อมูลรูปภาพที่แก้ไขไปยัง EditForm.tsx
-    };
-    reader.readAsDataURL(file);
-  };
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("product_id", product_id!);
+    formData.append("old_filename", images[index].filename); // ส่งชื่อไฟล์เดิมไปด้วย
   
+    setLoading(true);
+  
+    try {
+      const response = await fetch(`http://localhost:3000/api/update-image`, {
+        method: "POST",
+        body: formData,
+      });
+  
+      const data = await response.json();
+      if (data.success) {
+        const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
+        const updatedImages = [...images];
+        updatedImages[index] = newImage;
+        setImages(updatedImages);
+        onImagesUpdate(updatedImages);
+      } else {
+        console.error("❌ Upload failed:", data.message);
+      }
+    } catch (error) {
+      console.error("🚨 Error uploading image:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   
   const handleDeleteImage = async (index: number) => {
     const imageToDelete = images[index];
-  
+
     if (!product_id) {
       // ถ้าไม่มี product_id (สินค้าใหม่) ให้ลบรูปภาพออกจาก state
       const updatedImages = images.filter((_, i) => i !== index);
@@ -983,7 +996,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       onImagesUpdate(updatedImages);
       return;
     }
-  
+
     try {
       const response = await fetch(`http://localhost:3000/api/delete-image`, {
         method: "DELETE",
@@ -992,7 +1005,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
         },
         body: JSON.stringify({ filename: imageToDelete.filename, product_id }),
       });
-  
+
       const data = await response.json();
       if (data.success) {
         const updatedImages = images.filter((_, i) => i !== index);
@@ -1005,6 +1018,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       console.error("🚨 Error deleting image:", error);
     }
   };
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 p-3 dark:bg-white/[0.03]">
@@ -1038,86 +1052,3 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     </div>
   );
 }
-
-
-
-
-// "use client";
-// import React, { useEffect, useState } from "react";
-// import { useParams } from "react-router-dom";
-
-// export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
-//   const { product_id } = useParams();
-//   const [images, setImages] = useState<{ filename: string; fileBuffer?: string; isEdited?: boolean }[]>([]);
-//   const [loading, setLoading] = useState(false);
-
-//   useEffect(() => {
-//     const fetchExistingImages = async () => {
-//       if (!product_id) return;
-//       try {
-//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-//         const data = await response.json();
-
-//         if (data.success) {
-//           const existingImages = [];
-
-//           if (data.product.images_main) {
-//             existingImages.push({
-//               filename: data.product.images_main,
-//               fileBuffer: `/products/${data.product.images_main}`,
-//             });
-//           }
-
-//           if (data.product.supplementary_images) {
-//             data.product.supplementary_images.forEach((img) => {
-//               existingImages.push({
-//                 filename: img,
-//                 fileBuffer: `/products/${img}`,
-//               });
-//             });
-//           }
-
-//           setImages(existingImages);
-//           onImagesUpdate(existingImages);
-//         }
-//       } catch (error) {
-//         console.error("🚨 Error fetching images:", error);
-//       }
-//     };
-
-//     fetchExistingImages();
-//   }, [product_id]);
-
-//   const handleEditImage = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = event.target.files?.[0];
-//     if (!file) return;
-
-//     const reader = new FileReader();
-//     reader.onload = () => {
-//       const newImage = { filename: file.name, fileBuffer: reader.result as string, isEdited: true };
-//       const updatedImages = [...images];
-//       updatedImages[index] = newImage;
-//       setImages(updatedImages);
-//       onImagesUpdate(updatedImages);
-//     };
-//     reader.readAsDataURL(file);
-//   };
-
-//   return (
-//     <div className="space-y-2">
-//       <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white p-3">
-//         {images.map((img, index) => (
-//           <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">
-//             <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
-//             <div className="absolute top-1 right-1 flex gap-1">
-//               <label className="bg-white p-1 rounded-full cursor-pointer">
-//                 <span className="material-icons text-gray-600 text-sm">edit</span>
-//                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handleEditImage(index, e)} />
-//               </label>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }

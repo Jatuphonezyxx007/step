@@ -325,7 +325,54 @@ export default function ProductForm() {
     return new Blob([ab], { type: mimeString });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+
+//   const handleSubmit = async (e: React.FormEvent) => {
+//     e.preventDefault();
+
+//     if (!productName.trim() || (!categoryName.trim() && !selectedCategory)) {
+//       alert("กรุณากรอกชื่อสินค้าและเลือกหมวดหมู่");
+//       return;
+//     }
+
+//     // ✅ สร้าง `FormData`
+//     const formData = new FormData();
+//     formData.append("product_name", productName.trim());
+
+//     if (isAddingCategory) {
+//       formData.append("category_name", categoryName.trim()); // ✅ ใช้ category_name ถ้าเพิ่มใหม่
+//     } else {
+//       formData.append("category_id", selectedCategory); // ✅ ใช้ category_id ถ้าเลือกจากตัวเลือก
+//     }
+    
+
+//     // ✅ เพิ่มรายละเอียดสินค้า
+//     const details = JSON.stringify({
+//       detail: productDetail.trim() || "", // ✅ ส่งค่าที่ถูกต้อง
+//     });
+//     formData.append("details", details);
+
+//     // ✅ ส่งข้อมูลไป API
+//     const response = await fetch("http://localhost:3000/api/add-product", {
+//       method: "POST",
+//       body: formData,
+//     });
+
+    
+//     // const data = await response.json();
+//     // if (data.success) {
+//     //   alert("เพิ่มสินค้าสำเร็จ!");
+//     //   navigate("/dashboard");
+//     // } else {
+//     //   console.error("เกิดข้อผิดพลาด:", data.message);
+//     // }
+//     const data = await response.json();
+// if (data.success) {
+//   setProductId(data.product_id); // ตั้งค่า product_id หลังจากเพิ่มสินค้า
+//   alert("เพิ่มสินค้าสำเร็จ!");
+// }
+
+// };
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!productName.trim() || (!categoryName.trim() && !selectedCategory)) {
