@@ -543,118 +543,10 @@
 //     </ComponentCard>
 //   );
 // }
-
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// import React, { useState, useEffect, Suspense } from "react";
-// import { useDropzone } from "react-dropzone";
-// import { Canvas } from "@react-three/fiber";
-// import { OrbitControls, useGLTF, Html, Environment, Bounds } from "@react-three/drei";
-// import { motion } from "framer-motion";
-// import ComponentCard from "../../common/ComponentCard";
-// import * as THREE from "three";
-
-// function Model({ url }: { url: string }) {
-//   console.log("⏳ กำลังโหลดโมเดล:", url);
-//   useGLTF.preload(url);
-//   const { scene } = useGLTF(url);
-
-//   useEffect(() => {
-//     console.log("✅ โหลดโมเดลสำเร็จ:", scene);
-
-//     const box = new THREE.Box3().setFromObject(scene);
-//     const center = box.getCenter(new THREE.Vector3());
-//     scene.position.set(-center.x, -center.y, -center.z);
-//   }, [scene]);
-
-//   return <primitive object={scene} />;
-// }
-
-// export default function Dropzone3D({ 
-//   onFileSelect, 
-//   existingModelUrl 
-// }: { 
-//   onFileSelect: (file: File | null) => void, 
-//   existingModelUrl?: string 
-// }) {
-//   const [modelUrl, setModelUrl] = useState<string | null>(existingModelUrl || null);
-//   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-//   const onDrop = (acceptedFiles: File[]) => {
-//     if (acceptedFiles.length > 0) {
-//       const file = acceptedFiles[0];
-//       const url = URL.createObjectURL(file);
-//       console.log("📌 สร้าง URL โมเดลใหม่:", url);
-//       setModelUrl(url);
-//       setSelectedFile(file);
-//       onFileSelect(file);
-//     }
-//   };
-
-//   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-//     onDrop,
-//     accept: {
-//       "model/gltf-binary": [".glb"],
-//       "model/gltf+json": [".gltf"],
-//     },
-//   });
-
-//   useEffect(() => {
-//     if (existingModelUrl) {
-//       setModelUrl(existingModelUrl);
-//     }
-//   }, [existingModelUrl]);
-
-//   return (
-//     <ComponentCard title="3D Viewer">
-//       <motion.div
-//         {...getRootProps()}
-//         className={`transition border border-dashed rounded-xl p-7 lg:p-10 cursor-pointer ${
-//           isDragActive ? "border-blue-500 bg-gray-100 dark:bg-gray-800" 
-//                       : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
-//         }`}
-//         whileHover={{ scale: 1.05 }}
-//         whileTap={{ scale: 0.95 }}
-//       >
-//         <input {...getInputProps()} />
-//         {modelUrl ? (
-//           <div style={{ width: "100%", height: "500px", borderRadius: "10px", overflow: "hidden" }}>
-//             <Canvas shadows dpr={[1, 2]}>
-//               <Environment preset="sunset" />
-//               <ambientLight intensity={0.3} />
-//               <directionalLight position={[5, 10, 5]} intensity={1.5} castShadow />
-//               <spotLight position={[0, 5, 10]} intensity={2} angle={0.3} penumbra={1} castShadow />
-//               <Bounds fit clip observe>
-//                 <Suspense fallback={<Html center><p>⏳ กำลังโหลดโมเดล...</p></Html>}>
-//                   <Model url={modelUrl} />
-//                 </Suspense>
-//               </Bounds>
-//               <OrbitControls autoRotate autoRotateSpeed={1} enableDamping dampingFactor={0.05} />
-//             </Canvas>
-//           </div>
-//         ) : (
-//           <motion.div className="flex flex-col items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-//             <p className="text-gray-500 text-lg">
-//               {isDragActive ? "📂 วางไฟล์ 3D model ที่นี่" : "📁 ลากไฟล์ 3D model (.glb, .gltf) หรือคลิกเพื่อเลือกไฟล์"}
-//             </p>
-//           </motion.div>
-//         )}
-//       </motion.div>
-//     </ComponentCard>
-//   );
-// }
-// --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useDropzone } from "react-dropzone";
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Html, Environment, Bounds } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, useGLTF, Html, Environment, Bounds } from "@react-three/drei";
 import { motion } from "framer-motion";
 import ComponentCard from "../../common/ComponentCard";
 import * as THREE from "three";
@@ -675,24 +567,18 @@ function Model({ url }: { url: string }) {
   return <primitive object={scene} />;
 }
 
-export default function Dropzone3D({ 
-  onFileSelect, 
-  existingModelUrl 
-}: { 
-  onFileSelect: (file: File | null) => void, 
-  existingModelUrl?: string 
-}) {
-  const [modelUrl, setModelUrl] = useState<string | null>(existingModelUrl || null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+export default function Dropzone3D({ onFileSelect }: { onFileSelect: (file: File | null) => void }) {
+  const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); // 📌 เก็บไฟล์ไว้ใน state
 
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       const url = URL.createObjectURL(file);
-      console.log("📌 สร้าง URL โมเดลใหม่:", url);
+      console.log("📌 สร้าง URL โมเดล:", url);
       setModelUrl(url);
-      setSelectedFile(file);
-      onFileSelect(file);
+      setSelectedFile(file); // 📌 เก็บไฟล์ไว้ใน state
+      onFileSelect(file); // 📌 ส่งไฟล์กลับไปที่ `EditForm.tsx`
     }
   };
 
@@ -705,18 +591,22 @@ export default function Dropzone3D({
   });
 
   useEffect(() => {
-    if (existingModelUrl && !selectedFile) {
-      setModelUrl(existingModelUrl);
-    }
-  }, [existingModelUrl, selectedFile]);
+    return () => {
+      if (modelUrl) {
+        console.log("🧹 ล้าง URL:", modelUrl);
+        setTimeout(() => URL.revokeObjectURL(modelUrl), 5000);
+      }
+    };
+  }, [modelUrl]);
 
   return (
     <ComponentCard title="3D Viewer">
       <motion.div
         {...getRootProps()}
         className={`transition border border-dashed rounded-xl p-7 lg:p-10 cursor-pointer ${
-          isDragActive ? "border-blue-500 bg-gray-100 dark:bg-gray-800" 
-                      : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
+          isDragActive
+            ? "border-blue-500 bg-gray-100 dark:bg-gray-800"
+            : "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900"
         }`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}

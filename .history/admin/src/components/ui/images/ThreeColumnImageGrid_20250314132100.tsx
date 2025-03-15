@@ -739,74 +739,109 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
-export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
-  const { product_id } = useParams(); // ดึง product_id จาก URL
+// export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
+//   const { product_id } = useParams(); // ดึง product_id จาก URL
+//   const [images, setImages] = useState<{ filename: string; fileBuffer?: string }[]>([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // ✅ 🔍 ดึงข้อมูลรูปภาพที่มีอยู่ในฐานข้อมูล
+//   useEffect(() => {
+//     const fetchExistingImages = async () => {
+//       if (!product_id) return;
+//       try {
+//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+//         const data = await response.json();
+  
+//         if (data.success) {
+//           const existingImages = [];
+  
+//           if (data.product.images_main) {
+//             existingImages.push({
+//               filename: data.product.images_main,
+//               fileBuffer: `/products/${data.product.images_main}`,
+//             });
+//           }
+  
+//           if (data.product.supplementary_images) {
+//             data.product.supplementary_images.forEach((img) => {
+//               existingImages.push({
+//                 filename: img,
+//                 fileBuffer: `/products/${img}`,
+//               });
+//             });
+//           }
+  
+//           setImages(existingImages);
+//           onImagesUpdate(existingImages);
+//         }
+//       } catch (error) {
+//         console.error("🚨 Error fetching images:", error);
+//       }
+//     };
+  
+//     fetchExistingImages();
+//   }, [product_id]);
+
+export default function ThreeColumnImageGrid({ productId, onImagesUpdate = () => {} }) {
   const [images, setImages] = useState<{ filename: string; fileBuffer?: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ 🔍 ดึงข้อมูลรูปภาพที่มีอยู่ในฐานข้อมูล
   useEffect(() => {
-    const fetchExistingImages = async () => {
-      if (!product_id) return;
-      try {
-        const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-        const data = await response.json();
-  
-        if (data.success) {
-          const existingImages = [];
-  
-          if (data.product.images_main) {
-            existingImages.push({
-              filename: data.product.images_main,
-              fileBuffer: `/products/${data.product.images_main}`,
-              existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
-            });
-          }
-          
-          if (data.product.supplementary_images) {
-            data.product.supplementary_images.forEach((img) => {
-              existingImages.push({
-                filename: img,
-                fileBuffer: `/products/${img}`,
-                existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
-              });
-            });
-          }
-            
-          setImages(existingImages);
-          onImagesUpdate(existingImages);
-        }
-      } catch (error) {
-        console.error("🚨 Error fetching images:", error);
-      }
-    };
-  
+    if (!productId) return; // 🔍 ป้องกันการโหลดภาพหากไม่มี productId
     fetchExistingImages();
-  }, [product_id]);
+  }, [productId]);
+
+  const fetchExistingImages = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/products/${productId}`);
+      const data = await response.json();
+      if (data.success) {
+        const existingImages = [];
+        if (data.product.images_main) {
+          existingImages.push({ filename: data.product.images_main, fileBuffer: `/products/${data.product.images_main}` });
+        }
+        if (data.product.supplementary_images) {
+          data.product.supplementary_images.forEach((img) => {
+            existingImages.push({ filename: img, fileBuffer: `/products/${img}` });
+          });
+        }
+        setImages(existingImages);
+        onImagesUpdate(existingImages);
+      }
+    } catch (error) {
+      console.error("🚨 Error fetching images:", error);
+    }
+  };
+
   
   // ✅ 📤 อัปโหลดรูปภาพใหม่ (แบบชั่วคราว)
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!productId) {
+      alert("กรุณาเพิ่มสินค้าและบันทึกก่อนอัปโหลดรูปภาพ!");
+      return;
+    }
+  
     const file = event.target.files?.[0];
     if (!file) return;
-
+  
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("product_id", product_id!);
-
+    formData.append("product_id", productId); // ใช้ค่า productId ที่ถูกต้อง
+  
     setLoading(true);
-
+  
     try {
-      const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
+      const response = await fetch("http://localhost:3000/api/upload-image-temp", {
         method: "POST",
         body: formData,
       });
-
+  
       const data = await response.json();
       if (data.success) {
         const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
         const updatedImages = [...images, newImage];
         setImages(updatedImages);
-        onImagesUpdate(updatedImages); // ✅ ส่งข้อมูลไปให้ `EditForm.tsx`
+        onImagesUpdate(updatedImages);
       } else {
         console.error("❌ Upload failed:", data.message);
       }
@@ -816,7 +851,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="space-y-2">
       {/* <label className="text-gray-700 font-medium">รูปภาพสินค้า</label> */}

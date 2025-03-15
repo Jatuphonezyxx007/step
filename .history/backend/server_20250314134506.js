@@ -19,11 +19,8 @@ app.use(express.json());
 
 // ให้บริการไฟล์ static สำหรับรูปสินค้า
 app.use('/products', express.static(path.join(__dirname, '../admin/public/products')));
-//ให้บริการ static สำหรับร 3d
-app.use('/3d', express.static(path.join(__dirname, '../admin/public/products_3d')));
 // ให้บริการไฟล์ static สำหรับรูปผู้ใช้
 app.use('/images/user', express.static(path.join(__dirname, '../admin/public/images/user')));
-
 
 // ตั้งค่าการเชื่อมต่อ MySQL
 const pool = mysql.createPool({
@@ -35,72 +32,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 });
-
-
-
-
-// ตั้งค่าการเก็บไฟล์ 3D
-const storage3d = multer.memoryStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../admin/public/products_3d");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    // 📌 ดึง product_id จาก req.body
-    const productId = req.body.product_id;
-    
-    if (!productId) {
-      return cb(new Error("❌ Missing product_id"), null);
-    }
-
-    // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
-    const fileExt = path.extname(file.originalname).toLowerCase();
-
-    // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
-    const newFilename = `${productId}${fileExt}`;
-    cb(null, newFilename);
-  },
-});
-// const upload3d = multer({
-//   storage: storage3d,
-//   fileFilter: (req, file, cb) => {
-//     const allowedTypes = [".obj", ".glb", ".gltf", ".stl"];
-//     const ext = path.extname(file.originalname).toLowerCase();
-//     if (!allowedTypes.includes(ext)) {
-//       return cb(new Error("Only 3D file formats are allowed"), false);
-//     }
-//     cb(null, true);
-//   },
-// });
-const upload3d = multer({
-  storage: storage3d, // ✅ อัปเดตเป็น memoryStorage()
-  limits: { fileSize: 50 * 1024 * 1024 }, // จำกัดขนาด 50MB
-  fileFilter: (req, file, cb) => {
-    console.log("📌 Checking file:", file.originalname);
-    const allowedTypes = [".obj", ".glb", ".gltf", ".stl"];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowedTypes.includes(ext)) {
-      return cb(new Error("❌ Only 3D file formats are allowed"), false);
-    }
-    cb(null, true);
-  },
-});
-// ✅ ทดสอบ API ว่ารับไฟล์จริงไหม
-// app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
-//   console.log("📌 File received:", req.file); // ✅ ดูว่า req.file มีค่าหรือไม่
-
-//   if (!req.file) {
-//     return res.status(400).json({ success: false, message: "No file uploaded" });
-//   }
-
-//   res.status(200).json({ success: true, message: "File uploaded successfully", file: req.file });
-// });
-
-
-
 
 // ตรวจสอบการเชื่อมต่อฐานข้อมูล
 async function checkDBConnection() {
@@ -445,6 +376,36 @@ app.get('/api/product', async (req, res) => {
 
 
 // ✅ API: อัปโหลดรูปภาพ (ยังไม่บันทึกลง `/public/products`)
+// app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+//     if (!req.file) {
+//       return res.status(400).json({ success: false, message: "No file uploaded" });
+//     }
+
+//     if (!product_id) {
+//       return res.status(400).json({ success: false, message: "Product ID is missing" });
+//     }
+
+//     const fileExt = path.extname(req.file.originalname);
+    
+//     // 🔍 ตรวจสอบจำนวนรูปภาพที่มีอยู่แล้ว
+//     const [imageCount] = await pool.query(
+//       "SELECT COUNT(*) AS count FROM product_images WHERE product_id = ?",
+//       [product_id]
+//     );
+//     const index = imageCount[0].count + 1; // กำหนด index ถัดไป
+//     const filename = `/${product_id}_${index}${fileExt}`;
+
+//     // 🛑 ยังไม่ copy ไปที่ `/public/products`
+//     console.log("📸 Temporary uploaded image:", filename);
+
+//     res.status(200).json({ success: true, filename, fileBuffer: req.file.buffer.toString("base64") });
+//   } catch (error) {
+//     console.error("🚨 Error uploading image:", error);
+//     res.status(500).json({ success: false, message: "Error uploading image" });
+//   }
+// });
 app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
   try {
     let { product_id } = req.body;
@@ -470,211 +431,59 @@ app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
 });
 
 
-// app.post("/api/save-images", upload.array("images"), async (req, res) => {
-//   try {
-//     const { product_id } = req.body;
-//     const images = req.files;
-
-//     if (!product_id || !images || images.length === 0) {
-//       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
-//     }
-
-//     const savePath = path.join(__dirname, "../admin/public/products");
-
-//     if (!fs.existsSync(savePath)) {
-//       fs.mkdirSync(savePath, { recursive: true });
-//     }
-
-//     // ดึงจำนวนรูปภาพที่มีอยู่แล้วในฐานข้อมูล
-//     const [existingImages] = await pool.query(
-//       "SELECT path FROM product_images WHERE product_id = ?",
-//       [product_id]
-//     );
-
-//     // หา index ถัดไปของรูปภาพ
-//     const existingImageCount = existingImages.length;
-//     let nextIndex = existingImageCount + 1;
-
-//     const savedFiles = [];
-
-//     for (let index = 0; index < images.length; index++) {
-//       const file = images[index];
-//       const fileExt = path.extname(file.originalname);
-//       const filename = `${product_id}_${nextIndex}${fileExt}`;
-//       const filePath = path.join(savePath, filename);
-
-//       fs.writeFileSync(filePath, file.buffer);
-//       console.log(`✅ Saved image: ${filePath}`);
-
-//       // บันทึกลงฐานข้อมูล
-//       if (nextIndex === 1) {
-//         await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
-//       } else {
-//         await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
-//       }
-
-//       savedFiles.push(filename);
-//       nextIndex++;
-//     }
-
-//     res.status(200).json({ success: true, message: "Images saved successfully", files: savedFiles });
-//   } catch (error) {
-//     console.error("🚨 Error saving images:", error);
-//     res.status(500).json({ success: false, message: "Error saving images" });
-//   }
-// });
+// ✅ API บันทึกภาพ (หลังจากกดบันทึก)
 app.post("/api/save-images", upload.array("images"), async (req, res) => {
   try {
     const { product_id } = req.body;
     const images = req.files;
 
+    console.log("🔍 Received product_id:", product_id);
+    console.log("🖼️ Received images:", images.length);
+
     if (!product_id || !images || images.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
     }
 
+    // ✅ ใช้ path admin/public/products
     const savePath = path.join(__dirname, "../admin/public/products");
 
     if (!fs.existsSync(savePath)) {
       fs.mkdirSync(savePath, { recursive: true });
+      console.log("📂 Created directory:", savePath);
     }
 
-    // 🔍 ดึงรูปภาพที่มีอยู่แล้วในฐานข้อมูล
+    // ดึงรายชื่อไฟล์ที่มีอยู่ในฐานข้อมูล
     const [existingImages] = await pool.query(
       "SELECT path FROM product_images WHERE product_id = ?",
       [product_id]
     );
-
-    const existingFileNames = existingImages.map(img => img.path);
-
-    let nextIndex = existingImages.length + 1; // กำหนด index ให้รูปภาพใหม่เริ่มจากตัวถัดไป
-
-    const savedFiles = [];
+    const existingImageSet = new Set(existingImages.map(img => img.path));
 
     for (let index = 0; index < images.length; index++) {
       const file = images[index];
       const fileExt = path.extname(file.originalname);
-      const filename = `${product_id}_${nextIndex}${fileExt}`;
-
-      // ตรวจสอบว่าชื่อไฟล์ซ้ำหรือไม่ ถ้าซ้ำให้ข้าม
-      if (existingFileNames.includes(filename)) {
-        console.log(`⚠️ Image ${filename} already exists, skipping...`);
-        continue;
-      }
-
+      const filename = `${product_id}_${index + 1}${fileExt}`; // ✅ ไม่มี "/" นำหน้า
       const filePath = path.join(savePath, filename);
-      fs.writeFileSync(filePath, file.buffer);
-      console.log(`✅ Saved image: ${filePath}`);
 
-      // บันทึกลงฐานข้อมูล
-      if (nextIndex === 1) {
-        await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+      // 🔍 ตรวจสอบว่ามีไฟล์นี้อยู่แล้วหรือไม่
+      if (!existingImageSet.has(filename) && !fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, file.buffer);
+        console.log(`✅ Saved image: ${filePath}`);
+
+        if (index === 0) {
+          await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
+        } else {
+          await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+        }
       } else {
-        await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
+        console.log(`⏭️ Skipping existing image: ${filename}`);
       }
-
-      savedFiles.push(filename);
-      nextIndex++;
     }
 
-    res.status(200).json({ success: true, message: "Images saved successfully", files: savedFiles });
+    res.status(200).json({ success: true, message: "Images saved successfully" });
   } catch (error) {
     console.error("🚨 Error saving images:", error);
     res.status(500).json({ success: false, message: "Error saving images" });
-  }
-});
-
-// //API อัปโหลดไฟล์ 3d
-// app.post("/api/upload-3d", upload.single("file"), async (req, res) => {
-//   try {
-//     let { product_id } = req.body;
-
-//     if (!req.file) {
-//       return res.status(400).json({ success: false, message: "No file uploaded" });
-//     }
-
-//     if (!product_id || product_id === "null") {
-//       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
-//     }
-
-//     const fileExt = path.extname(req.file.originalname);
-//     const filename = `/${product_id}${fileExt}`;
-
-//     res.status(200).json({ success: true, filename, fileBuffer: req.file.buffer.toString("base64") });
-//   } catch (error) {
-//     console.error("🚨 Error uploading 3d file:", error);
-//     res.status(500).json({ success: false, message: "Error uploading 3d file" });
-//   }
-// });
-// const storage3d = multer.memoryStorage(); // ✅ ใช้ memory storage ไม่บันทึกไฟล์ทันที
-// const upload3d = multer({ storage: storage3d });
-// API อัปโหลดไฟล์ 3D
-app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
-  try {
-    console.log("📌 Body received:", req.body);
-    console.log("📌 File received:", req.file);
-
-    let { product_id } = req.body;
-
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
-    }
-
-    if (!product_id || product_id === "null") {
-      return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
-    }
-
-    // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
-    const fileExt = path.extname(req.file.originalname).toLowerCase();
-    
-    // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
-    const newFilename = `${product_id}${fileExt}`;
-
-    // 📌 สร้าง path สำหรับบันทึกไฟล์
-    const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
-
-    // 📌 บันทึกไฟล์จาก memoryStorage ลง disk
-    fs.writeFileSync(uploadPath, req.file.buffer);
-
-    // 📌 ตั้งค่า path ที่จะบันทึกลงฐานข้อมูล
-    const filePath = `/${newFilename}`;
-
-    // 📌 บันทึกลงฐานข้อมูล
-    const connection = await pool.getConnection();
-    await connection.execute(
-      "INSERT INTO product_3d_models (product_id, path) VALUES (?, ?)",
-      [product_id, filePath]
-    );
-    connection.release();
-
-    res.status(200).json({ success: true, filePath });
-  } catch (error) {
-    console.error("🚨 Error uploading 3D file:", error);
-    res.status(500).json({ success: false, message: "Error uploading 3D file" });
-  }
-});
-
-// ✅ API: ดึงข้อมูลไฟล์ 3D ของสินค้า
-app.get("/api/products/:product_id/3d", async (req, res) => {
-  try {
-    const { product_id } = req.params;
-
-    // ค้นหาไฟล์ 3D ที่เกี่ยวข้องกับ `product_id`
-    const [rows] = await pool.query(
-      "SELECT path FROM product_3d_models WHERE product_id = ? LIMIT 1",
-      [product_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "3D model not found" });
-    }
-
-    // ✅ ส่ง path ของไฟล์ 3D กลับไป
-    const filePath = rows[0].path;
-    return res.status(200).json({ success: true, path: `/3d${filePath}` });
-
-  } catch (error) {
-    console.error("🚨 Error fetching 3D model:", error);
-    return res.status(500).json({ success: false, message: "Error fetching 3D model" });
   }
 });
 
@@ -1267,7 +1076,7 @@ app.post("/api/add-product", upload.array("images"), async (req, res) => {
   }
 });
 
-//ลบรายการสินค้า
+
 app.delete("/api/products/:product_id", async (req, res) => {
   const { product_id } = req.params;
 
@@ -1327,121 +1136,3 @@ app.delete("/api/products/:product_id", async (req, res) => {
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });
-
-
-// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// require('dotenv').config(); // โหลดค่าจากไฟล์ .env
-
-// const express = require('express');
-// const mysql = require('mysql2/promise');
-// const cors = require('cors');
-// const fs = require('fs');
-// const path = require('path');
-// const multer = require('multer');
-// const bodyParser = require("body-parser");
-
-// const app = express();
-// const port = process.env.PORT || 3000;
-
-// app.use(bodyParser.json({ limit: "50mb" }));
-// app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-// app.use(cors());
-// app.use(express.json());
-
-// // ให้บริการไฟล์ static
-// app.use('/3d', express.static(path.join(__dirname, '../admin/public/products_3d')));
-
-// // ✅ ใช้ middleware เพื่อให้ Express รองรับ multipart/form-data
-// // app.use(multer().any());
-
-// // ตั้งค่าการเชื่อมต่อ MySQL
-// const pool = mysql.createPool({
-//   host: process.env.DB_HOST,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   database: process.env.DB_NAME,
-//   waitForConnections: true,
-//   connectionLimit: 10,
-//   queueLimit: 0,
-// });
-
-// // ตั้งค่า multer สำหรับการเก็บไฟล์ 3D
-// const storage3d = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     const uploadPath = path.join(__dirname, "../admin/public/products_3d");
-//     if (!fs.existsSync(uploadPath)) {
-//       fs.mkdirSync(uploadPath, { recursive: true });
-//     }
-//     cb(null, uploadPath);
-//   },
-//   filename: (req, file, cb) => {
-//     const fileExt = path.extname(file.originalname);
-//     const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExt}`;
-//     cb(null, filename);
-//   },
-// });
-
-// const upload3d = multer({
-//   storage: storage3d,
-//   limits: { fileSize: 50 * 1024 * 1024 }, // จำกัดขนาด 50MB
-//   fileFilter: (req, file, cb) => {
-//     console.log("📌 Checking file:", file.originalname);
-//     const allowedTypes = [".obj", ".glb", ".gltf", ".stl"];
-//     const ext = path.extname(file.originalname).toLowerCase();
-//     if (!allowedTypes.includes(ext)) {
-//       return cb(new Error("❌ Only 3D file formats are allowed"), false);
-//     }
-//     cb(null, true);
-//   },
-// });
-
-// // ✅ API: อัปโหลดไฟล์ 3D
-// app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
-//   try {
-//     console.log("📌 Body received:", req.body);
-//     console.log("📌 File received:", req.file);
-
-//     if (!req.file) {
-//       return res.status(400).json({ success: false, message: "No file uploaded" });
-//     }
-
-//     let { product_id } = req.body;
-
-//     if (!product_id || product_id === "null") {
-//       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
-//     }
-
-//     const filePath = `/3d/${req.file.filename}`;
-
-//     // บันทึกลงฐานข้อมูล
-//     const connection = await pool.getConnection();
-//     await connection.execute(
-//       "INSERT INTO product_3d_models (product_id, path) VALUES (?, ?)",
-//       [product_id, filePath]
-//     );
-//     connection.release();
-
-//     res.status(200).json({ success: true, filePath });
-//   } catch (error) {
-//     console.error("🚨 Error uploading 3D file:", error);
-//     res.status(500).json({ success: false, message: "Error uploading 3D file" });
-//   }
-// });
-
-// // ✅ ตรวจสอบการเชื่อมต่อฐานข้อมูล
-// async function checkDBConnection() {
-//   try {
-//     const connection = await pool.getConnection();
-//     console.log('✅ MySQL Database Connected Successfully.');
-//     connection.release();
-//   } catch (error) {
-//     console.error('❌ Database Connection Failed:', error);
-//     process.exit(1);
-//   }
-// }
-// checkDBConnection();
-
-// // ✅ เริ่มเซิร์ฟเวอร์
-// app.listen(port, () => {
-//   console.log(`🚀 Server running at http://localhost:${port}`);
-// });

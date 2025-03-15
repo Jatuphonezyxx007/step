@@ -71,7 +71,7 @@ const App = () => {
                 />
                 
                 <Route
-                    path="/categories/:id"
+                    path="/category/:id"
                     element={
                         <>
                             <Navbar />

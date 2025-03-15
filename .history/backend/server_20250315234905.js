@@ -653,32 +653,6 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
   }
 });
 
-// ✅ API: ดึงข้อมูลไฟล์ 3D ของสินค้า
-app.get("/api/products/:product_id/3d", async (req, res) => {
-  try {
-    const { product_id } = req.params;
-
-    // ค้นหาไฟล์ 3D ที่เกี่ยวข้องกับ `product_id`
-    const [rows] = await pool.query(
-      "SELECT path FROM product_3d_models WHERE product_id = ? LIMIT 1",
-      [product_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "3D model not found" });
-    }
-
-    // ✅ ส่ง path ของไฟล์ 3D กลับไป
-    const filePath = rows[0].path;
-    return res.status(200).json({ success: true, path: `/3d${filePath}` });
-
-  } catch (error) {
-    console.error("🚨 Error fetching 3D model:", error);
-    return res.status(500).json({ success: false, message: "Error fetching 3D model" });
-  }
-});
-
-
 
 // ✅ API: อัปเดตข้อมูลสินค้า
 app.put("/api/products/:product_id", async (req, res) => {

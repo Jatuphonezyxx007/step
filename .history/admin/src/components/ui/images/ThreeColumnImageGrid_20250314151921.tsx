@@ -759,20 +759,18 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
             existingImages.push({
               filename: data.product.images_main,
               fileBuffer: `/products/${data.product.images_main}`,
-              existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
             });
           }
-          
+  
           if (data.product.supplementary_images) {
             data.product.supplementary_images.forEach((img) => {
               existingImages.push({
                 filename: img,
                 fileBuffer: `/products/${img}`,
-                existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
               });
             });
           }
-            
+  
           setImages(existingImages);
           onImagesUpdate(existingImages);
         }

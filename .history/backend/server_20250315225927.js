@@ -37,8 +37,6 @@ const pool = mysql.createPool({
 });
 
 
-
-
 // ตั้งค่าการเก็บไฟล์ 3D
 const storage3d = multer.memoryStorage({
   destination: (req, file, cb) => {
@@ -76,7 +74,7 @@ const storage3d = multer.memoryStorage({
 //   },
 // });
 const upload3d = multer({
-  storage: storage3d, // ✅ อัปเดตเป็น memoryStorage()
+  storage: storage3d,
   limits: { fileSize: 50 * 1024 * 1024 }, // จำกัดขนาด 50MB
   fileFilter: (req, file, cb) => {
     console.log("📌 Checking file:", file.originalname);
@@ -88,6 +86,7 @@ const upload3d = multer({
     cb(null, true);
   },
 });
+
 // ✅ ทดสอบ API ว่ารับไฟล์จริงไหม
 // app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
 //   console.log("📌 File received:", req.file); // ✅ ดูว่า req.file มีค่าหรือไม่
@@ -470,59 +469,6 @@ app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
 });
 
 
-// app.post("/api/save-images", upload.array("images"), async (req, res) => {
-//   try {
-//     const { product_id } = req.body;
-//     const images = req.files;
-
-//     if (!product_id || !images || images.length === 0) {
-//       return res.status(400).json({ success: false, message: "Invalid data (missing product_id or images)" });
-//     }
-
-//     const savePath = path.join(__dirname, "../admin/public/products");
-
-//     if (!fs.existsSync(savePath)) {
-//       fs.mkdirSync(savePath, { recursive: true });
-//     }
-
-//     // ดึงจำนวนรูปภาพที่มีอยู่แล้วในฐานข้อมูล
-//     const [existingImages] = await pool.query(
-//       "SELECT path FROM product_images WHERE product_id = ?",
-//       [product_id]
-//     );
-
-//     // หา index ถัดไปของรูปภาพ
-//     const existingImageCount = existingImages.length;
-//     let nextIndex = existingImageCount + 1;
-
-//     const savedFiles = [];
-
-//     for (let index = 0; index < images.length; index++) {
-//       const file = images[index];
-//       const fileExt = path.extname(file.originalname);
-//       const filename = `${product_id}_${nextIndex}${fileExt}`;
-//       const filePath = path.join(savePath, filename);
-
-//       fs.writeFileSync(filePath, file.buffer);
-//       console.log(`✅ Saved image: ${filePath}`);
-
-//       // บันทึกลงฐานข้อมูล
-//       if (nextIndex === 1) {
-//         await pool.query("UPDATE products SET images_main = ? WHERE product_id = ?", [filename, product_id]);
-//       } else {
-//         await pool.query("INSERT INTO product_images (product_id, path) VALUES (?, ?)", [product_id, filename]);
-//       }
-
-//       savedFiles.push(filename);
-//       nextIndex++;
-//     }
-
-//     res.status(200).json({ success: true, message: "Images saved successfully", files: savedFiles });
-//   } catch (error) {
-//     console.error("🚨 Error saving images:", error);
-//     res.status(500).json({ success: false, message: "Error saving images" });
-//   }
-// });
 app.post("/api/save-images", upload.array("images"), async (req, res) => {
   try {
     const { product_id } = req.body;
@@ -538,15 +484,15 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
       fs.mkdirSync(savePath, { recursive: true });
     }
 
-    // 🔍 ดึงรูปภาพที่มีอยู่แล้วในฐานข้อมูล
+    // ดึงจำนวนรูปภาพที่มีอยู่แล้วในฐานข้อมูล
     const [existingImages] = await pool.query(
       "SELECT path FROM product_images WHERE product_id = ?",
       [product_id]
     );
 
-    const existingFileNames = existingImages.map(img => img.path);
-
-    let nextIndex = existingImages.length + 1; // กำหนด index ให้รูปภาพใหม่เริ่มจากตัวถัดไป
+    // หา index ถัดไปของรูปภาพ
+    const existingImageCount = existingImages.length;
+    let nextIndex = existingImageCount + 1;
 
     const savedFiles = [];
 
@@ -554,14 +500,8 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
       const file = images[index];
       const fileExt = path.extname(file.originalname);
       const filename = `${product_id}_${nextIndex}${fileExt}`;
-
-      // ตรวจสอบว่าชื่อไฟล์ซ้ำหรือไม่ ถ้าซ้ำให้ข้าม
-      if (existingFileNames.includes(filename)) {
-        console.log(`⚠️ Image ${filename} already exists, skipping...`);
-        continue;
-      }
-
       const filePath = path.join(savePath, filename);
+
       fs.writeFileSync(filePath, file.buffer);
       console.log(`✅ Saved image: ${filePath}`);
 
@@ -623,20 +563,8 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
     }
 
-    // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
-    const fileExt = path.extname(req.file.originalname).toLowerCase();
-    
-    // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
-    const newFilename = `${product_id}${fileExt}`;
-
-    // 📌 สร้าง path สำหรับบันทึกไฟล์
-    const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
-
-    // 📌 บันทึกไฟล์จาก memoryStorage ลง disk
-    fs.writeFileSync(uploadPath, req.file.buffer);
-
     // 📌 ตั้งค่า path ที่จะบันทึกลงฐานข้อมูล
-    const filePath = `/${newFilename}`;
+    const filePath = `/${product_id}${path.extname(req.file.filename)}`;
 
     // 📌 บันทึกลงฐานข้อมูล
     const connection = await pool.getConnection();
@@ -652,33 +580,6 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
     res.status(500).json({ success: false, message: "Error uploading 3D file" });
   }
 });
-
-// ✅ API: ดึงข้อมูลไฟล์ 3D ของสินค้า
-app.get("/api/products/:product_id/3d", async (req, res) => {
-  try {
-    const { product_id } = req.params;
-
-    // ค้นหาไฟล์ 3D ที่เกี่ยวข้องกับ `product_id`
-    const [rows] = await pool.query(
-      "SELECT path FROM product_3d_models WHERE product_id = ? LIMIT 1",
-      [product_id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: "3D model not found" });
-    }
-
-    // ✅ ส่ง path ของไฟล์ 3D กลับไป
-    const filePath = rows[0].path;
-    return res.status(200).json({ success: true, path: `/3d${filePath}` });
-
-  } catch (error) {
-    console.error("🚨 Error fetching 3D model:", error);
-    return res.status(500).json({ success: false, message: "Error fetching 3D model" });
-  }
-});
-
-
 
 // ✅ API: อัปเดตข้อมูลสินค้า
 app.put("/api/products/:product_id", async (req, res) => {

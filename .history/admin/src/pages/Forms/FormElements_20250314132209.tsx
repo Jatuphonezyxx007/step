@@ -341,7 +341,11 @@ if (data.success) {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <div className="space-y-6">
           <ComponentCard title="รูปภาพสินค้า">
-            <ThreeColumnImageGrid onImagesUpdate={setTempImages} />
+            {/* <ThreeColumnImageGrid onImagesUpdate={setTempImages} /> */}
+            {/* <ThreeColumnImageGrid productId={productId} onImagesUpdate={setTempImages} /> */}
+            {productId && <ThreeColumnImageGrid productId={productId} onImagesUpdate={setTempImages} />}
+
+
             <DropZone onDrop={setTempImages} />
           </ComponentCard>
         </div>

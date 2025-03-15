@@ -735,6 +735,110 @@
 
 
 
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { useParams } from "react-router-dom";
+
+// export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
+//   const { product_id } = useParams(); // ดึง product_id จาก URL
+//   const [images, setImages] = useState<{ filename: string; fileBuffer?: string }[]>([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // ✅ 🔍 ดึงข้อมูลรูปภาพที่มีอยู่ในฐานข้อมูล
+//   useEffect(() => {
+//     const fetchExistingImages = async () => {
+//       if (!product_id) return;
+//       try {
+//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
+//         const data = await response.json();
+  
+//         if (data.success) {
+//           const existingImages = [];
+  
+//           if (data.product.images_main) {
+//             existingImages.push({
+//               filename: data.product.images_main,
+//               fileBuffer: `/products/${data.product.images_main}`,
+//             });
+//           }
+  
+//           if (data.product.supplementary_images) {
+//             data.product.supplementary_images.forEach((img) => {
+//               existingImages.push({
+//                 filename: img,
+//                 fileBuffer: `/products/${img}`,
+//               });
+//             });
+//           }
+  
+//           setImages(existingImages);
+//           onImagesUpdate(existingImages);
+//         }
+//       } catch (error) {
+//         console.error("🚨 Error fetching images:", error);
+//       }
+//     };
+  
+//     fetchExistingImages();
+//   }, [product_id]);
+  
+//   // ✅ 📤 อัปโหลดรูปภาพใหม่ (แบบชั่วคราว)
+//   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+//     const file = event.target.files?.[0];
+//     if (!file) return;
+
+//     const formData = new FormData();
+//     formData.append("image", file);
+//     formData.append("product_id", product_id!);
+
+//     setLoading(true);
+
+//     try {
+//       const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
+//         method: "POST",
+//         body: formData,
+//       });
+
+//       const data = await response.json();
+//       if (data.success) {
+//         const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
+//         const updatedImages = [...images, newImage];
+//         setImages(updatedImages);
+//         onImagesUpdate(updatedImages); // ✅ ส่งข้อมูลไปให้ `EditForm.tsx`
+//       } else {
+//         console.error("❌ Upload failed:", data.message);
+//       }
+//     } catch (error) {
+//       console.error("🚨 Error uploading image:", error);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="space-y-2">
+//       {/* <label className="text-gray-700 font-medium">รูปภาพสินค้า</label> */}
+//       <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 p-3 dark:bg-white/[0.03]">
+//         {/* ✅ แสดงรูปภาพที่มีอยู่ */}
+//         {images.map((img, index) => (
+//           <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">
+//             <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
+//           </div>
+//         ))}
+  
+//         {/* ✅ ปุ่มเพิ่มรูปภาพ */}
+//         <label className="w-full h-28 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
+//           {loading ? (
+//             <span className="material-icons text-gray-400 text-3xl animate-spin">sync</span>
+//           ) : (
+//             <span className="material-icons text-gray-400 text-3xl">add</span>
+//           )}
+//           <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+//         </label>
+//       </div>
+//     </div>
+//   );
+//   }
 "use client";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -759,20 +863,18 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
             existingImages.push({
               filename: data.product.images_main,
               fileBuffer: `/products/${data.product.images_main}`,
-              existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
             });
           }
-          
+  
           if (data.product.supplementary_images) {
             data.product.supplementary_images.forEach((img) => {
               existingImages.push({
                 filename: img,
                 fileBuffer: `/products/${img}`,
-                existing: true, // ✅ กำหนดให้รู้ว่าเป็นภาพเก่า
               });
             });
           }
-            
+  
           setImages(existingImages);
           onImagesUpdate(existingImages);
         }
@@ -784,14 +886,14 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     fetchExistingImages();
   }, [product_id]);
   
-  // ✅ 📤 อัปโหลดรูปภาพใหม่ (แบบชั่วคราว)
+  // ✅ 📤 อัปโหลดรูปภาพใหม่
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !product_id) return;
 
     const formData = new FormData();
     formData.append("image", file);
-    formData.append("product_id", product_id!);
+    formData.append("product_id", product_id);
 
     setLoading(true);
 
@@ -806,7 +908,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
         const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
         const updatedImages = [...images, newImage];
         setImages(updatedImages);
-        onImagesUpdate(updatedImages); // ✅ ส่งข้อมูลไปให้ `EditForm.tsx`
+        onImagesUpdate(updatedImages);
       } else {
         console.error("❌ Upload failed:", data.message);
       }
@@ -817,18 +919,28 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     }
   };
 
+  // ✅ ลบรูปภาพที่อัปโหลด
+  const handleRemoveImage = (filename: string) => {
+    const updatedImages = images.filter(img => img.filename !== filename);
+    setImages(updatedImages);
+    onImagesUpdate(updatedImages);
+  };
+
   return (
     <div className="space-y-2">
-      {/* <label className="text-gray-700 font-medium">รูปภาพสินค้า</label> */}
       <div className="grid grid-cols-3 gap-3 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 p-3 dark:bg-white/[0.03]">
-        {/* ✅ แสดงรูปภาพที่มีอยู่ */}
         {images.map((img, index) => (
           <div key={index} className="relative w-full h-28 border border-gray-300 rounded-lg overflow-hidden">
             <img src={img.fileBuffer} alt={`Uploaded ${index + 1}`} className="w-full h-full object-cover" />
+            <button
+              className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded px-2 py-1"
+              onClick={() => handleRemoveImage(img.filename)}
+            >
+              ✖
+            </button>
           </div>
         ))}
   
-        {/* ✅ ปุ่มเพิ่มรูปภาพ */}
         <label className="w-full h-28 border border-dashed border-gray-400 flex items-center justify-center rounded-lg cursor-pointer">
           {loading ? (
             <span className="material-icons text-gray-400 text-3xl animate-spin">sync</span>
@@ -840,4 +952,4 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       </div>
     </div>
   );
-  }
+}
