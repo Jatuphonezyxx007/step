@@ -433,7 +433,10 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
 
 app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
   try {
-    const { product_id } = req.body;
+    console.log("📌 Body received:", req.body);
+    console.log("📌 File received:", req.file);
+
+    let { product_id } = req.body;
 
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
@@ -445,27 +448,14 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
 
     // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
     const fileExt = path.extname(req.file.originalname).toLowerCase();
-
+    
     // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
     const newFilename = `${product_id}${fileExt}`;
 
     // 📌 สร้าง path สำหรับบันทึกไฟล์
     const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
 
-    // 📌 ตรวจสอบว่ามีไฟล์เก่าอยู่หรือไม่
-    const [existingFile] = await pool.query(
-      "SELECT path FROM product_3d_models WHERE product_id = ?",
-      [product_id]
-    );
-
-    if (existingFile.length > 0) {
-      const oldFilePath = path.join(__dirname, "../admin/public/products_3d", existingFile[0].path);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath); // ลบไฟล์เก่า
-      }
-    }
-
-    // 📌 บันทึกไฟล์ใหม่
+    // 📌 บันทึกไฟล์จาก memoryStorage ลง disk
     fs.writeFileSync(uploadPath, req.file.buffer);
 
     // 📌 ตั้งค่า path ที่จะบันทึกลงฐานข้อมูล
@@ -485,6 +475,40 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
     res.status(500).json({ success: false, message: "Error uploading 3D file" });
   }
 });
+// app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
+//   try {
+//     const { product_id } = req.body;
+
+//     if (!req.file) {
+//       return res.status(400).json({ success: false, message: "No file uploaded" });
+//     }
+
+//     if (!product_id || product_id === "null") {
+//       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
+//     }
+
+//     const fileExt = path.extname(req.file.originalname).toLowerCase();
+//     const newFilename = `${product_id}${fileExt}`;
+//     const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
+
+//     fs.writeFileSync(uploadPath, req.file.buffer);
+
+//     const filePath = `/${newFilename}`;
+
+//     const connection = await pool.getConnection();
+//     await connection.execute(
+//       "INSERT INTO product_3d_models (product_id, path) VALUES (?, ?)",
+//       [product_id, filePath]
+//     );
+//     connection.release();
+
+//     res.status(200).json({ success: true, filePath });
+//   } catch (error) {
+//     console.error("🚨 Error uploading 3D file:", error);
+//     res.status(500).json({ success: false, message: "Error uploading 3D file" });
+//   }
+// });
+
 
 
 // ✅ API: ดึงข้อมูลไฟล์ 3D ของสินค้า

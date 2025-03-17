@@ -1436,44 +1436,44 @@ export default function EditForm() {
         console.error("🚨 Error fetching 3D model:", error);
       }
     };
-
+    
     Promise.all([fetchProductData(), fetch3DModel()]).finally(() => setLoading(false));
   }, [product_id]);
 
 
   // กดปุ่มบันทึกข้อมูล
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!product_id) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product_id) return;
 
-  try {
-    // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
-    if (selected3DFile) {
-      const formData = new FormData();
-      formData.append("file", selected3DFile);
-      formData.append("product_id", product_id);
+    try {
+      // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
+      if (selected3DFile) {
+        const formData = new FormData();
+        formData.append("file", selected3DFile);
+        formData.append("product_id", product_id);
 
-      const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
-        method: "POST",
-        body: formData,
-      });
+        const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
+          method: "POST",
+          body: formData,
+        });
 
-      const uploadData = await uploadResponse.json();
-      if (!uploadData.success) {
-        console.error("❌ Error uploading 3D file:", uploadData.message);
-        return;
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          console.error("❌ Error uploading 3D file:", uploadData.message);
+          return;
+        }
+        console.log("✅ 3D Model uploaded:", uploadData.filePath);
       }
-      console.log("✅ 3D Model uploaded:", uploadData.filePath);
-    }
 
-    // ✅ อัปเดตข้อมูลสินค้า
-    const updatedProduct = {
+      // ✅ อัปเดตข้อมูลสินค้า
+      const updatedProduct = {
       product_name: productName,
       detail: productDetail,
       category_id: selectedCategory,
     };
     const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
-      method: "PUT",
+      method: "PUT", // หรือ "PATCH" ถ้า API รองรับ
       headers: {
         "Content-Type": "application/json",
       },
@@ -1486,13 +1486,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       return;
     }
 
-    console.log("✅ Product data saved!");
-    navigate("/dashboard");
-  } catch (error) {
-    console.error("🚨 Error submitting form:", error);
-  }
-};
-
+      console.log("✅ Product data saved!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("🚨 Error submitting form:", error);
+    }
+  };
 
 
 

@@ -978,7 +978,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
       console.error("🚨 Error deleting image:", error);
     }
   };
-    
+  
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;

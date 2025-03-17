@@ -1159,222 +1159,6 @@
 //     </div>
 //   );
 // }
-
-
-
-// // --------------------------------------
-// import React, { useEffect, useState } from "react";
-// import { useParams, useNavigate } from "react-router-dom";
-// import PageMeta from "../../components/common/PageMeta";
-// import Button from "../../components/ui/button/Button";
-// import ComponentCard from "../../components/common/ComponentCard";
-// import DropZone from "../../components/form/form-elements/DropZone";
-// import ThreeColumnImageGrid from "../../components/ui/images/ThreeColumnImageGrid";
-// import Inputs from "../../components/form/form-elements/Inputs";
-
-// export default function EditForm() {
-//   const { product_id } = useParams<{ product_id?: string }>();
-//   const [product, setProduct] = useState<any>({});
-//   const [categories, setCategories] = useState<{ value: number; label: string }[]>([]);
-//   const [existingModelUrl, setExistingModelUrl] = useState<string | null>(null);
-//   const [selected3DFile, setSelected3DFile] = useState<File | null>(null);
-//   const [tempImages, setTempImages] = useState<{ filename: string; fileBuffer: string; isEdited?: boolean }[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const navigate = useNavigate();
-//   const [isOpen, setIsOpen] = useState(false);
-
-//   const [productName, setProductName] = useState("");
-//   const [productDetail, setProductDetail] = useState("");
-//   const [selectedCategory, setSelectedCategory] = useState("");
-
-//   useEffect(() => {
-//     if (!product_id) {
-//       setError("❌ Product ID is missing");
-//       setLoading(false);
-//       return;
-//     }
-
-//     const fetchProductData = async () => {
-//       try {
-//         const response = await fetch(`http://localhost:3000/api/products/${product_id}`);
-//         const data = await response.json();
-//         if (data.success) {
-//           setProduct(data.product);
-//           setProductName(data.product.product_name || "");
-//           setProductDetail(data.product.detail || "");
-//           setSelectedCategory(String(data.product.category_id || ""));
-//         } else {
-//           setError(data.message);
-//         }
-//       } catch (err) {
-//         console.error("🚨 Error fetching product details:", err);
-//         setError("❌ Error fetching product details");
-//       }
-//     };
-
-//     const fetch3DModel = async () => {
-//       try {
-//         const response = await fetch(`http://localhost:3000/api/products/${product_id}/3d`);
-//         const data = await response.json();
-//         if (data.success && data.path) {
-//           setExistingModelUrl(`http://localhost:3000${data.path}`);
-//         } else {
-//           console.error("❌ No 3D model found for this product");
-//         }
-//       } catch (error) {
-//         console.error("🚨 Error fetching 3D model:", error);
-//       }
-//     };
-
-//     Promise.all([fetchProductData(), fetch3DModel()]).finally(() => setLoading(false));
-//   }, [product_id]);
-
-//   const handleUpload3DFile = async (file: File | null, productId: string) => {
-//     if (!file) return;
-  
-//     const formData = new FormData();
-//     formData.append("file", file);
-//     formData.append("product_id", productId);
-  
-//     try {
-//       const response = await fetch("http://localhost:3000/api/upload-3d", {
-//         method: "POST",
-//         body: formData,
-//       });
-  
-//       const data = await response.json();
-//       if (data.success) {
-//         console.log("✅ 3D file uploaded successfully:", data.filePath);
-//       } else {
-//         console.error("❌ Failed to upload 3D file:", data.message);
-//       }
-//     } catch (error) {
-//       console.error("🚨 Error uploading 3D file:", error);
-//     }
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     if (!product_id) return;
-
-//     try {
-//       // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
-//       if (selected3DFile) {
-//         const formData = new FormData();
-//         formData.append("file", selected3DFile);
-//         formData.append("product_id", product_id);
-
-//         const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
-//           method: "POST",
-//           body: formData,
-//         });
-
-//         const uploadData = await uploadResponse.json();
-//         if (!uploadData.success) {
-//           console.error("❌ Error uploading 3D file:", uploadData.message);
-//           return;
-//         }
-//         console.log("✅ 3D Model uploaded:", uploadData.filePath);
-//       }
-
-//           // ✅ อัปโหลดรูปภาพที่แก้ไข
-//             // ✅ ตรวจสอบและอัปเดตรูปภาพ
-//     if (tempImages.some(img => img.isEdited)) {
-//       const updatedImages = tempImages.filter(img => img.isEdited);
-//       await uploadImages(product_id, updatedImages);
-//     }
-
-//       console.log("✅ Product data saved!");
-//       navigate("/dashboard");
-//     } 
-//     catch (error) {
-//       console.error("🚨 Error submitting form:", error);
-//     }
-//   };
-
-//   const handleDeleteProduct = async () => {
-//     if (!product_id) return;
-//     try {
-//       const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
-//         method: "DELETE",
-//       });
-//       const data = await response.json();
-//       if (data.success) {
-//         navigate("/dashboard");
-//       } else {
-//         console.error("❌ Error deleting product:", data.message);
-//       }
-//     } catch (error) {
-//       console.error("🚨 Error deleting product:", error);
-//     }
-//     setIsOpen(false);
-//   };
-
-//   if (loading) return <div>⏳ Loading...</div>;
-//   if (error) return <div className="text-red-500">{error}</div>;
-
-//   return (
-//     <div>
-//       <PageMeta title={`Edit Product: ${product?.product_name || "Unknown"}`} description="แก้ไขรายละเอียดสินค้า" />
-//       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-//         <div className="space-y-6">
-//           <ComponentCard title="รูปภาพสินค้า">
-//             <ThreeColumnImageGrid onImagesUpdate={setTempImages} />
-//             <DropZone onFileSelect={setSelected3DFile} existingModelUrl={existingModelUrl} />
-//           </ComponentCard>
-//         </div>
-//         <form onSubmit={handleSubmit}>
-//           <Inputs 
-//             productName={productName}
-//             setProductName={setProductName}
-//             productDetail={productDetail}
-//             setProductDetail={setProductDetail}
-//             selectedCategory={selectedCategory}
-//             setSelectedCategory={setSelectedCategory}
-//           />
-//           <br />
-//           <div className="flex items-center justify-end gap-5">
-//             <Button
-//               type="button"
-//               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-//               onClick={() => setIsOpen(true)}
-//             >
-//               ลบสินค้า
-//             </Button>
-//             <Button type="submit" size="sm" variant="primary">
-//               บันทึกข้อมูล
-//             </Button>
-//           </div>
-//         </form>
-
-//         {/* Modal */}
-//         {isOpen && (
-//           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-//             <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl animate-fadeIn transform transition-all duration-300 ease-in-out">
-//               <h2 className="text-xl font-bold text-gray-800 mb-4">⚠️ ยืนยันการลบสินค้า</h2>
-//               <p className="text-sm text-gray-600 mb-6">คุณแน่ใจหรือไม่ว่าต้องการ <span className="text-red-600 font-semibold">ลบสินค้านี้</span> ?</p>
-//               <div className="flex justify-end space-x-3">
-//                 <button
-//                   onClick={() => setIsOpen(false)}
-//                   className="px-4 py-2 text-sm rounded border border-gray-300 hover:bg-gray-100 transition-colors duration-200"
-//                 >
-//                   ยกเลิก
-//                 </button>
-//                 <button
-//                   onClick={handleDeleteProduct}
-//                   className="px-4 py-2 text-sm rounded bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
-//                 >
-//                   ลบ
-//                 </button>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
@@ -1431,6 +1215,8 @@ export default function EditForm() {
         const data = await response.json();
         if (data.success && data.path) {
           setExistingModelUrl(`http://localhost:3000${data.path}`);
+        } else {
+          console.error("❌ No 3D model found for this product");
         }
       } catch (error) {
         console.error("🚨 Error fetching 3D model:", error);
@@ -1440,63 +1226,62 @@ export default function EditForm() {
     Promise.all([fetchProductData(), fetch3DModel()]).finally(() => setLoading(false));
   }, [product_id]);
 
-
-  // กดปุ่มบันทึกข้อมูล
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!product_id) return;
-
-  try {
-    // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
-    if (selected3DFile) {
-      const formData = new FormData();
-      formData.append("file", selected3DFile);
-      formData.append("product_id", product_id);
-
-      const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
+  const handleUpload3DFile = async (file: File | null, productId: string) => {
+    if (!file) return;
+  
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("product_id", productId);
+  
+    try {
+      const response = await fetch("http://localhost:3000/api/upload-3d", {
         method: "POST",
         body: formData,
       });
-
-      const uploadData = await uploadResponse.json();
-      if (!uploadData.success) {
-        console.error("❌ Error uploading 3D file:", uploadData.message);
-        return;
+  
+      const data = await response.json();
+      if (data.success) {
+        console.log("✅ 3D file uploaded successfully:", data.filePath);
+      } else {
+        console.error("❌ Failed to upload 3D file:", data.message);
       }
-      console.log("✅ 3D Model uploaded:", uploadData.filePath);
+    } catch (error) {
+      console.error("🚨 Error uploading 3D file:", error);
     }
+  };
 
-    // ✅ อัปเดตข้อมูลสินค้า
-    const updatedProduct = {
-      product_name: productName,
-      detail: productDetail,
-      category_id: selectedCategory,
-    };
-    const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedProduct),
-    });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product_id) return;
 
-    const data = await response.json();
-    if (!data.success) {
-      console.error("❌ Error updating product:", data.message);
-      return;
+    try {
+      // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
+      if (selected3DFile) {
+        const formData = new FormData();
+        formData.append("file", selected3DFile);
+        formData.append("product_id", product_id);
+
+        const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          console.error("❌ Error uploading 3D file:", uploadData.message);
+          return;
+        }
+        console.log("✅ 3D Model uploaded:", uploadData.filePath);
+      }
+
+      console.log("✅ Product data saved!");
+      navigate("/dashboard");
+    } 
+    catch (error) {
+      console.error("🚨 Error submitting form:", error);
     }
+  };
 
-    console.log("✅ Product data saved!");
-    navigate("/dashboard");
-  } catch (error) {
-    console.error("🚨 Error submitting form:", error);
-  }
-};
-
-
-
-
-  // กดปุ่มลบข้อมูล
   const handleDeleteProduct = async () => {
     if (!product_id) return;
     try {

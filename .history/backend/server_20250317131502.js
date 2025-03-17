@@ -431,6 +431,50 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
 });
 
 
+// app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
+//   try {
+//     console.log("📌 Body received:", req.body);
+//     console.log("📌 File received:", req.file);
+
+//     let { product_id } = req.body;
+
+//     if (!req.file) {
+//       return res.status(400).json({ success: false, message: "No file uploaded" });
+//     }
+
+//     if (!product_id || product_id === "null") {
+//       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
+//     }
+
+//     // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
+//     const fileExt = path.extname(req.file.originalname).toLowerCase();
+    
+//     // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
+//     const newFilename = `${product_id}${fileExt}`;
+
+//     // 📌 สร้าง path สำหรับบันทึกไฟล์
+//     const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
+
+//     // 📌 บันทึกไฟล์จาก memoryStorage ลง disk
+//     fs.writeFileSync(uploadPath, req.file.buffer);
+
+//     // 📌 ตั้งค่า path ที่จะบันทึกลงฐานข้อมูล
+//     const filePath = `/${newFilename}`;
+
+//     // 📌 บันทึกลงฐานข้อมูล
+//     const connection = await pool.getConnection();
+//     await connection.execute(
+//       "INSERT INTO product_3d_models (product_id, path) VALUES (?, ?)",
+//       [product_id, filePath]
+//     );
+//     connection.release();
+
+//     res.status(200).json({ success: true, filePath });
+//   } catch (error) {
+//     console.error("🚨 Error uploading 3D file:", error);
+//     res.status(500).json({ success: false, message: "Error uploading 3D file" });
+//   }
+// });
 app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
   try {
     const { product_id } = req.body;
@@ -443,35 +487,14 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
       return res.status(400).json({ success: false, message: "Product ID is missing or invalid" });
     }
 
-    // 📌 ดึงนามสกุลไฟล์ (เช่น .glb, .obj)
     const fileExt = path.extname(req.file.originalname).toLowerCase();
-
-    // 📌 ตั้งชื่อไฟล์ใหม่เป็น "product_id.นามสกุลไฟล์"
     const newFilename = `${product_id}${fileExt}`;
-
-    // 📌 สร้าง path สำหรับบันทึกไฟล์
     const uploadPath = path.join(__dirname, "../admin/public/products_3d", newFilename);
 
-    // 📌 ตรวจสอบว่ามีไฟล์เก่าอยู่หรือไม่
-    const [existingFile] = await pool.query(
-      "SELECT path FROM product_3d_models WHERE product_id = ?",
-      [product_id]
-    );
-
-    if (existingFile.length > 0) {
-      const oldFilePath = path.join(__dirname, "../admin/public/products_3d", existingFile[0].path);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath); // ลบไฟล์เก่า
-      }
-    }
-
-    // 📌 บันทึกไฟล์ใหม่
     fs.writeFileSync(uploadPath, req.file.buffer);
 
-    // 📌 ตั้งค่า path ที่จะบันทึกลงฐานข้อมูล
     const filePath = `/${newFilename}`;
 
-    // 📌 บันทึกลงฐานข้อมูล
     const connection = await pool.getConnection();
     await connection.execute(
       "INSERT INTO product_3d_models (product_id, path) VALUES (?, ?)",
@@ -485,6 +508,7 @@ app.post("/api/upload-3d", upload3d.single("file"), async (req, res) => {
     res.status(500).json({ success: false, message: "Error uploading 3D file" });
   }
 });
+
 
 
 // ✅ API: ดึงข้อมูลไฟล์ 3D ของสินค้า
@@ -717,6 +741,7 @@ app.delete("/api/products/:product_id", async (req, res) => {
   }
 });
 
+
 app.post("/api/update-image", upload.single("image"), async (req, res) => {
   try {
     const { product_id, old_filename, image_index } = req.body;
@@ -782,6 +807,7 @@ app.post("/api/update-image", upload.single("image"), async (req, res) => {
     res.status(500).json({ success: false, message: "Error updating image" });
   }
 });
+
 
 
 // app.delete("/api/delete-image", async (req, res) => {
@@ -917,30 +943,39 @@ app.delete("/api/delete-image", async (req, res) => {
         const currentImage = images[i];
         const nextImage = images[i + 1];
 
-        // สร้างชื่อไฟล์ใหม่โดยลดเลขลำดับลง 1
-        const newFilename = nextImage.path.replace(/_(\d+)\./, (match, p1) => `_${parseInt(p1) - 1}.`);
         const oldPath = path.join(__dirname, "../admin/public/products", nextImage.path);
-        const newPath = path.join(__dirname, "../admin/public/products", newFilename);
+        const newPath = path.join(__dirname, "../admin/public/products", currentImage.path);
 
-        // เปลี่ยนชื่อไฟล์บนเซิร์ฟเวอร์
         if (fs.existsSync(oldPath)) {
           fs.renameSync(oldPath, newPath);
-          console.log(`🔄 Renamed ${nextImage.path} to ${newFilename}`);
+          console.log(`🔄 Renamed ${nextImage.path} to ${currentImage.path}`);
         }
 
-        // อัปเดตชื่อไฟล์ในฐานข้อมูล
         await connection.query(
           "UPDATE product_images SET path = ? WHERE path = ? AND product_id = ?",
-          [newFilename, nextImage.path, product_id]
+          [currentImage.path, nextImage.path, product_id]
+        );
+      }
+
+      // 🔹 ถ้าภาพหลักถูกลบ ให้เปลี่ยนภาพแรกสุดเป็น `images_main`
+      if (isMainImage) {
+        const [nextMainImage] = await connection.query(
+          "SELECT path FROM product_images WHERE product_id = ? ORDER BY path ASC LIMIT 1",
+          [product_id]
         );
 
-        // ถ้าเป็นภาพหลัก ให้อัปเดต images_main ในตาราง products
-        if (isMainImage && i === imageIndex) {
+        if (nextMainImage.length > 0) {
           await connection.query(
             "UPDATE products SET images_main = ? WHERE product_id = ?",
-            [newFilename, product_id]
+            [nextMainImage[0].path, product_id]
           );
-          console.log(`🔄 Updated main image to: ${newFilename}`);
+          console.log(`🔄 Updated main image to: ${nextMainImage[0].path}`);
+        } else {
+          await connection.query(
+            "UPDATE products SET images_main = NULL WHERE product_id = ?",
+            [product_id]
+          );
+          console.log("🔄 No more images, set main image to NULL");
         }
       }
     }
@@ -955,6 +990,7 @@ app.delete("/api/delete-image", async (req, res) => {
     connection.release();
   }
 });
+
 
 
 

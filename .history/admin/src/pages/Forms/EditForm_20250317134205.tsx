@@ -1440,63 +1440,13 @@ export default function EditForm() {
     Promise.all([fetchProductData(), fetch3DModel()]).finally(() => setLoading(false));
   }, [product_id]);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product_id) return;
 
-  // กดปุ่มบันทึกข้อมูล
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!product_id) return;
+    // (handle submit เดิม)
+  };
 
-  try {
-    // ✅ อัปโหลดไฟล์ 3D ถ้ามีการเลือกไฟล์
-    if (selected3DFile) {
-      const formData = new FormData();
-      formData.append("file", selected3DFile);
-      formData.append("product_id", product_id);
-
-      const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
-        method: "POST",
-        body: formData,
-      });
-
-      const uploadData = await uploadResponse.json();
-      if (!uploadData.success) {
-        console.error("❌ Error uploading 3D file:", uploadData.message);
-        return;
-      }
-      console.log("✅ 3D Model uploaded:", uploadData.filePath);
-    }
-
-    // ✅ อัปเดตข้อมูลสินค้า
-    const updatedProduct = {
-      product_name: productName,
-      detail: productDetail,
-      category_id: selectedCategory,
-    };
-    const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedProduct),
-    });
-
-    const data = await response.json();
-    if (!data.success) {
-      console.error("❌ Error updating product:", data.message);
-      return;
-    }
-
-    console.log("✅ Product data saved!");
-    navigate("/dashboard");
-  } catch (error) {
-    console.error("🚨 Error submitting form:", error);
-  }
-};
-
-
-
-
-  // กดปุ่มลบข้อมูล
   const handleDeleteProduct = async () => {
     if (!product_id) return;
     try {

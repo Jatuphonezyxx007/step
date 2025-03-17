@@ -910,46 +910,73 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     fetchExistingImages();
   }, [product_id]);
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    // ถ้าไม่มี product_id (สินค้าใหม่) ให้เก็บรูปภาพชั่วคราวใน state
+    if (!product_id) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const newImage = { filename: file.name, fileBuffer: reader.result as string };
+        const updatedImages = [...images, newImage];
+        setImages(updatedImages);
+        onImagesUpdate(updatedImages);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // ถ้ามี product_id (สินค้าที่มีอยู่แล้ว) ให้อัปโหลดรูปภาพไปยังเซิร์ฟเวอร์
+    formData.append("product_id", product_id);
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
+        const updatedImages = [...images, newImage];
+        setImages(updatedImages);
+        onImagesUpdate(updatedImages);
+      } else {
+        console.error("❌ Upload failed:", data.message);
+      }
+    } catch (error) {
+      console.error("🚨 Error uploading image:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditImage = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
   
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("product_id", product_id);
-    formData.append("old_filename", images[index].filename);
-    formData.append("image_index", index.toString());
-  
-    setLoading(true);
-  
-    try {
-      const response = await fetch(`http://localhost:3000/api/update-image`, {
-        method: "POST",
-        body: formData,
-      });
-  
-      const data = await response.json();
-      if (data.success) {
-        const updatedImages = [...images];
-        updatedImages[index] = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}`, existing: true };
-        setImages(updatedImages);
-        onImagesUpdate(updatedImages);
-      } else {
-        console.error("❌ Update failed:", data.message);
-      }
-    } catch (error) {
-      console.error("🚨 Error updating image:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const reader = new FileReader();
+    reader.onload = () => {
+      const newImage = { filename: file.name, fileBuffer: reader.result as string, isEdited: true };
+      const updatedImages = [...images];
+      updatedImages[index] = newImage;
+      setImages(updatedImages);
+      onImagesUpdate(updatedImages); // ส่งข้อมูลรูปภาพที่แก้ไขไปยัง EditForm.tsx
+    };
+    reader.readAsDataURL(file);
+  };  
   
   const handleDeleteImage = async (index: number) => {
     const imageToDelete = images[index];
   
     if (!product_id) {
-      // ถ้าเป็นสินค้าใหม่ ให้ลบจาก state โดยตรง
+      // ถ้าไม่มี product_id (สินค้าใหม่) ให้ลบรูปภาพออกจาก state
       const updatedImages = images.filter((_, i) => i !== index);
       setImages(updatedImages);
       onImagesUpdate(updatedImages);
@@ -967,7 +994,6 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
   
       const data = await response.json();
       if (data.success) {
-        // 🔄 อัปเดตรายการรูปภาพใหม่
         const updatedImages = images.filter((_, i) => i !== index);
         setImages(updatedImages);
         onImagesUpdate(updatedImages);
@@ -977,183 +1003,7 @@ export default function ThreeColumnImageGrid({ onImagesUpdate = () => {} }) {
     } catch (error) {
       console.error("🚨 Error deleting image:", error);
     }
-  };
-    
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-  
-    const formData = new FormData();
-    formData.append("image", file);
-  
-    // ถ้าไม่มี product_id (สินค้าใหม่) ให้เก็บรูปภาพชั่วคราวใน state
-    if (!product_id) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const newImage = { filename: file.name, fileBuffer: reader.result as string };
-        const updatedImages = [...images, newImage];
-        setImages(updatedImages);
-        onImagesUpdate(updatedImages);
-      };
-      reader.readAsDataURL(file);
-      return;
-    }
-  
-    // ถ้ามี product_id (สินค้าที่มีอยู่แล้ว) ให้อัปโหลดรูปภาพไปยังเซิร์ฟเวอร์
-    formData.append("product_id", product_id);
-  
-    setLoading(true);
-  
-    try {
-      const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
-        method: "POST",
-        body: formData,
-      });
-  
-      const data = await response.json();
-      if (data.success) {
-        const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
-        const updatedImages = [...images, newImage];
-        setImages(updatedImages);
-        onImagesUpdate(updatedImages);
-      } else {
-        console.error("❌ Upload failed:", data.message);
-      }
-    } catch (error) {
-      console.error("🚨 Error uploading image:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (!file) return;
-
-  //   const formData = new FormData();
-  //   formData.append("image", file);
-
-  //   // ถ้าไม่มี product_id (สินค้าใหม่) ให้เก็บรูปภาพชั่วคราวใน state
-  //   if (!product_id) {
-  //     const reader = new FileReader();
-  //     reader.onload = () => {
-  //       const newImage = { filename: file.name, fileBuffer: reader.result as string };
-  //       const updatedImages = [...images, newImage];
-  //       setImages(updatedImages);
-  //       onImagesUpdate(updatedImages);
-  //     };
-  //     reader.readAsDataURL(file);
-  //     return;
-  //   }
-
-  //   // ถ้ามี product_id (สินค้าที่มีอยู่แล้ว) ให้อัปโหลดรูปภาพไปยังเซิร์ฟเวอร์
-  //   formData.append("product_id", product_id);
-
-  //   setLoading(true);
-
-  //   try {
-  //     const response = await fetch(`http://localhost:3000/api/upload-image-temp`, {
-  //       method: "POST",
-  //       body: formData,
-  //     });
-
-  //     const data = await response.json();
-  //     if (data.success) {
-  //       const newImage = { filename: data.filename, fileBuffer: `data:image/png;base64,${data.fileBuffer}` };
-  //       const updatedImages = [...images, newImage];
-  //       setImages(updatedImages);
-  //       onImagesUpdate(updatedImages);
-  //     } else {
-  //       console.error("❌ Upload failed:", data.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("🚨 Error uploading image:", error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const handleEditImage = async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = event.target.files?.[0];
-  //   if (!file) return;
-  
-  //   const reader = new FileReader();
-  //   reader.onload = () => {
-  //     const newImage = { filename: file.name, fileBuffer: reader.result as string, isEdited: true };
-  //     const updatedImages = [...images];
-  //     updatedImages[index] = newImage;
-  //     setImages(updatedImages);
-  //     onImagesUpdate(updatedImages); // ส่งข้อมูลรูปภาพที่แก้ไขไปยัง EditForm.tsx
-  //   };
-  //   reader.readAsDataURL(file);
-  // };  
-  
-  // // const handleDeleteImage = async (index: number) => {
-  // //   const imageToDelete = images[index];
-  
-  // //   if (!product_id) {
-  // //     // ถ้าไม่มี product_id (สินค้าใหม่) ให้ลบรูปภาพออกจาก state
-  // //     const updatedImages = images.filter((_, i) => i !== index);
-  // //     setImages(updatedImages);
-  // //     onImagesUpdate(updatedImages);
-  // //     return;
-  // //   }
-  
-  // //   try {
-  // //     const response = await fetch(`http://localhost:3000/api/delete-image`, {
-  // //       method: "DELETE",
-  // //       headers: {
-  // //         "Content-Type": "application/json",
-  // //       },
-  // //       body: JSON.stringify({ filename: imageToDelete.filename, product_id }),
-  // //     });
-  
-  // //     const data = await response.json();
-  // //     if (data.success) {
-  // //       const updatedImages = images.filter((_, i) => i !== index);
-  // //       setImages(updatedImages);
-  // //       onImagesUpdate(updatedImages);
-  // //     } else {
-  // //       console.error("❌ Delete failed:", data.message);
-  // //     }
-  // //   } catch (error) {
-  // //     console.error("🚨 Error deleting image:", error);
-  // //   }
-  // // };
-  // const handleDeleteImage = async (index: number) => {
-  //   const imageToDelete = images[index];
-  
-  //   if (!product_id) {
-  //     // ถ้าเป็นสินค้าใหม่ ให้ลบจาก state โดยตรง
-  //     const updatedImages = images.filter((_, i) => i !== index);
-  //     setImages(updatedImages);
-  //     onImagesUpdate(updatedImages);
-  //     return;
-  //   }
-  
-  //   try {
-  //     const response = await fetch(`http://localhost:3000/api/delete-image`, {
-  //       method: "DELETE",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ filename: imageToDelete.filename, product_id }),
-  //     });
-  
-  //     const data = await response.json();
-  //     if (data.success) {
-  //       // 🔄 อัปเดตรายการรูปภาพใหม่
-  //       const updatedImages = images.filter((_, i) => i !== index);
-  //       setImages(updatedImages);
-  //       onImagesUpdate(updatedImages);
-  //     } else {
-  //       console.error("❌ Delete failed:", data.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("🚨 Error deleting image:", error);
-  //   }
-  // };
-    
+  };  
   
   return (
     <div className="space-y-2">
