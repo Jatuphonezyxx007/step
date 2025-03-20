@@ -3439,103 +3439,65 @@ export default function EditForm() {
   //     console.error("🚨 Error submitting form:", error);
   //   }
   // };
-
-
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!product_id) return;
-  
-  //   try {
-  //     if (selected3DFile) {
-  //       const formData = new FormData();
-  //       formData.append("file", selected3DFile);
-  //       formData.append("product_id", product_id);
-  
-  //       const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
-  //         method: "POST",
-  //         body: formData,
-  //       });
-  
-  //       if (!uploadResponse.ok) {
-  //         const errorText = await uploadResponse.text();
-  //         throw new Error(`❌ 3D Upload Failed: ${errorText}`);
-  //       }
-  
-  //       const uploadData = await uploadResponse.json();
-  //       if (!uploadData.success) {
-  //         console.error("❌ Error uploading 3D file:", uploadData.message);
-  //         return;
-  //       }
-  //       console.log("✅ 3D Model uploaded:", uploadData.filePath);
-  //     }
-  
-  //     // บันทึกรูปภาพใหม่ที่ถูกเพิ่มเข้ามาใน tempImages
-  //     if (tempImages.length > 0) {
-  //       const formData = new FormData();
-  //       tempImages.forEach((img) => {
-  //         // ตรวจสอบว่า fileBuffer เป็น base64 string ที่ถูกต้อง
-  //         if (img.fileBuffer.startsWith("data:image")) {
-  //           const base64Data = img.fileBuffer.split(",")[1]; // ตัดส่วน "data:image/png;base64," ออก
-  //           const byteCharacters = atob(base64Data); // ถอดรหัส base64
-  //           const byteNumbers = new Array(byteCharacters.length);
-  //           for (let i = 0; i < byteCharacters.length; i++) {
-  //             byteNumbers[i] = byteCharacters.charCodeAt(i);
-  //           }
-  //           const byteArray = new Uint8Array(byteNumbers);
-  //           const blob = new Blob([byteArray], { type: "image/png" }); // สร้าง Blob จาก byteArray
-  //           formData.append("images", blob, img.filename); // เพิ่ม Blob ลงใน FormData
-  //         } else {
-  //           console.error("❌ Invalid fileBuffer format:", img.fileBuffer);
-  //         }
-  //       });
-  //       formData.append("product_id", product_id);
-  
-  //       const response = await fetch("http://localhost:3000/api/save-images", {
-  //         method: "POST",
-  //         body: formData,
-  //       });
-  
-  //       if (!response.ok) {
-  //         throw new Error("Failed to save images");
-  //       }
-  //     }
-  
-  //     const updatedProduct = {
-  //       product_name: productName,
-  //       detail: productDetail,
-  //       category_id: selectedCategory,
-  //     };
-  
-  //     const response = await fetch(`http://localhost:3000/api/products/${product_id}`, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(updatedProduct),
-  //     });
-  
-  //     if (!response.ok) {
-  //       const errorText = await response.text();
-  //       throw new Error(`❌ Update Failed: ${errorText}`);
-  //     }
-  
-  //     const data = await response.json();
-  //     if (!data.success) {
-  //       console.error("❌ Error updating product:", data.message);
-  //       return;
-  //     }
-  
-  //     console.log("✅ Product data saved!");
-  //     navigate("/dashboard"); // เด้งไปที่ /dashboard หลังจากบันทึกข้อมูลสำเร็จ
-  //   } catch (error) {
-  //     console.error("🚨 Error submitting form:", error);
-  //   }
-  // };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product_id) return;
   
     try {
-      // ✅ อัปเดตข้อมูลสินค้า
+      if (selected3DFile) {
+        const formData = new FormData();
+        formData.append("file", selected3DFile);
+        formData.append("product_id", product_id);
+  
+        const uploadResponse = await fetch("http://localhost:3000/api/upload-3d", {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(`❌ 3D Upload Failed: ${errorText}`);
+        }
+  
+        const uploadData = await uploadResponse.json();
+        if (!uploadData.success) {
+          console.error("❌ Error uploading 3D file:", uploadData.message);
+          return;
+        }
+        console.log("✅ 3D Model uploaded:", uploadData.filePath);
+      }
+  
+      // บันทึกรูปภาพใหม่ที่ถูกเพิ่มเข้ามาใน tempImages
+      if (tempImages.length > 0) {
+        const formData = new FormData();
+        tempImages.forEach((img) => {
+          // ตรวจสอบว่า fileBuffer เป็น base64 string ที่ถูกต้อง
+          if (img.fileBuffer.startsWith("data:image")) {
+            const base64Data = img.fileBuffer.split(",")[1]; // ตัดส่วน "data:image/png;base64," ออก
+            const byteCharacters = atob(base64Data); // ถอดรหัส base64
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: "image/png" }); // สร้าง Blob จาก byteArray
+            formData.append("images", blob, img.filename); // เพิ่ม Blob ลงใน FormData
+          } else {
+            console.error("❌ Invalid fileBuffer format:", img.fileBuffer);
+          }
+        });
+        formData.append("product_id", product_id);
+  
+        const response = await fetch("http://localhost:3000/api/save-images", {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!response.ok) {
+          throw new Error("Failed to save images");
+        }
+      }
+  
       const updatedProduct = {
         product_name: productName,
         detail: productDetail,
@@ -3559,59 +3521,11 @@ export default function EditForm() {
         return;
       }
   
-      console.log("✅ Product data updated!");
-  
-      // ✅ อัปโหลดรูปภาพใหม่
-      if (tempImages.length > 0) {
-        const formData = new FormData();
-        formData.append("product_id", product_id);
-  
-        for (const img of tempImages) {
-          let blob;
-          if (img.fileBuffer.startsWith("data:image")) {
-            // ถ้าเป็น base64 ให้แปลงเป็น Blob
-            blob = dataURLtoBlob(img.fileBuffer);
-          } else if (img.fileBuffer.startsWith("/products/")) {
-            // ✅ ถ้าเป็น URL ให้ดาวน์โหลดเป็น Blob
-            blob = await fetch(`http://localhost:3000${img.fileBuffer}`).then((res) => res.blob());
-          }
-  
-          if (blob) {
-            formData.append("images", blob, img.filename);
-          } else {
-            console.error("❌ Invalid fileBuffer format:", img.fileBuffer);
-          }
-        }
-  
-        const imageUploadResponse = await fetch("http://localhost:3000/api/save-images", {
-          method: "POST",
-          body: formData,
-        });
-  
-        const imageData = await imageUploadResponse.json();
-        if (imageData.success) {
-          console.log("✅ Images saved successfully!");
-        } else {
-          console.error("❌ Error saving images:", imageData.message);
-        }
-      }
-  
-      navigate("/dashboard");
+      console.log("✅ Product data saved!");
+      navigate("/dashboard"); // เด้งไปที่ /dashboard หลังจากบันทึกข้อมูลสำเร็จ
     } catch (error) {
       console.error("🚨 Error submitting form:", error);
     }
-  };
-  
-  // 🔹 ฟังก์ชันแปลง Base64 -> Blob
-  const dataURLtoBlob = (dataURL: string): Blob => {
-    const byteString = atob(dataURL.split(',')[1]);
-    const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ab], { type: mimeString });
   };
   
 

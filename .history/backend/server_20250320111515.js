@@ -470,52 +470,6 @@ app.post("/api/upload-image-temp", upload.single("image"), async (req, res) => {
 //     res.status(500).json({ success: false, message: "Error saving images" });
 //   }
 // });
-
-
-// app.post("/api/save-images", upload.array("images"), async (req, res) => {
-//   try {
-//     const { product_id } = req.body;
-//     const images = req.files || [];
-
-//     if (!product_id) {
-//       return res.status(400).json({ success: false, message: "Invalid data (missing product_id)" });
-//     }
-
-//     if (!images.length) {
-//       return res.status(400).json({ success: false, message: "No files uploaded" });
-//     }
-
-//     const savePath = path.join(__dirname, "../admin/public/products");
-//     if (!fs.existsSync(savePath)) {
-//       fs.mkdirSync(savePath, { recursive: true });
-//     }
-
-//     let isFirstImage = true;
-//     for (let i = 0; i < images.length; i++) {
-//       const file = images[i];
-//       const filename = file.originalname; // ✅ ใช้ชื่อไฟล์เดิมจาก FormData
-//       const filePath = path.join(savePath, filename);
-
-//       // ✅ บันทึกไฟล์ลงโฟลเดอร์
-//       fs.writeFileSync(filePath, file.buffer);
-
-//       // ✅ ตั้งค่าภาพแรกเป็น main image
-//       const is_main = isFirstImage ? 1 : 0;
-//       isFirstImage = false;
-
-//       // ✅ บันทึกลงฐานข้อมูล
-//       await pool.query(
-//         "INSERT INTO product_images (product_id, path, is_main) VALUES (?, ?, ?)",
-//         [product_id, filename, is_main]
-//       );
-//     }
-
-//     res.status(200).json({ success: true, message: "Images saved successfully" });
-//   } catch (error) {
-//     console.error("🚨 Error saving images:", error);
-//     res.status(500).json({ success: false, message: "Error saving images" });
-//   }
-// });
 app.post("/api/save-images", upload.array("images"), async (req, res) => {
   try {
     const { product_id } = req.body;
@@ -534,26 +488,11 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
       fs.mkdirSync(savePath, { recursive: true });
     }
 
-    // ✅ ดึงภาพที่มีอยู่แล้วจากฐานข้อมูล เพื่อตรวจสอบซ้ำซ้อน
-    const [existingImages] = await pool.query(
-      "SELECT path FROM product_images WHERE product_id = ?",
-      [product_id]
-    );
-
-    const existingImagePaths = new Set(existingImages.map((img) => img.path)); // แปลงเป็น Set เพื่อตรวจสอบเร็วขึ้น
-
-    let isFirstImage = existingImages.length === 0; // ✅ กำหนดภาพแรกเป็น main ถ้ายังไม่มีภาพใดๆ
-
+    let isFirstImage = true;
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
       const filename = file.originalname; // ✅ ใช้ชื่อไฟล์เดิมจาก FormData
       const filePath = path.join(savePath, filename);
-
-      // ✅ ตรวจสอบว่าภาพนี้มีอยู่แล้วหรือไม่
-      if (existingImagePaths.has(filename)) {
-        console.log(`⚠️ Image ${filename} already exists, skipping insert.`);
-        continue; // ข้ามการเพิ่มข้อมูลถ้าภาพนี้มีอยู่แล้ว
-      }
 
       // ✅ บันทึกไฟล์ลงโฟลเดอร์
       fs.writeFileSync(filePath, file.buffer);
@@ -567,8 +506,6 @@ app.post("/api/save-images", upload.array("images"), async (req, res) => {
         "INSERT INTO product_images (product_id, path, is_main) VALUES (?, ?, ?)",
         [product_id, filename, is_main]
       );
-
-      console.log(`✅ Image ${filename} added to database.`);
     }
 
     res.status(200).json({ success: true, message: "Images saved successfully" });
