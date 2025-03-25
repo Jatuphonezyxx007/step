@@ -82,10 +82,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-  <p>© 2025 Step Solutions Co., Ltd. All Rights Reserved. 
-    {/* <a href="/privacy">Privacy Policy</a> | 
-    <a href="/cookie">Cookie Policy</a> */}
-    </p>
+  <p>© 2025 Step Solutions Co., Ltd. All Rights Reserved. | <a href="/privacy">Privacy Policy</a> | <a href="/cookie">Cookie Policy</a></p>
   <button className="line-contact-btn">
     <a href="https://line.me/R/ti/p/@esv1182i" target="_blank" rel="noopener noreferrer">สอบถาม - สั่งซื้อ ผ่าน @LINE สะดวกกว่า</a>
   </button>

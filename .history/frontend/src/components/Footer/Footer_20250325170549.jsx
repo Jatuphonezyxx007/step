@@ -41,11 +41,11 @@ export default function Footer() {
         <div className="footer-section company">
           <h3 className="footer-title">เกี่ยวกับบริษัท</h3>
           <ul>
-            <li><a href="https://step-solutions.com/" target="_blank" rel="noopener noreferrer">เกี่ยวกับเรา</a></li>
-            <li><a href="https://step-solutions.com/our-factory/" target="_blank" rel="noopener noreferrer">โรงงานของเรา</a></li>
-            <li><a href="https://step-solutions.com/blog/" target="_blank" rel="noopener noreferrer">ข่าวสารและกิจกรรม</a></li>
-            <li><a href="https://step-solutions.com/career/" target="_blank" rel="noopener noreferrer">สมัครงาน</a></li>
-            <li><a href="https://step-solutions.com/contact-us/" target="_blank" rel="noopener noreferrer">ติดต่อเรา</a></li>
+            <li><a href="https://step-solutions.com/">เกี่ยวกับเรา</a></li>
+            <li>โรงงานของเรา</li>
+            <li>ข่าวสารและกิจกรรม</li>
+            <li>สมัครงาน</li>
+            <li>ติดต่อเรา</li>
           </ul>
         </div>
 
@@ -82,10 +82,7 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-  <p>© 2025 Step Solutions Co., Ltd. All Rights Reserved. 
-    {/* <a href="/privacy">Privacy Policy</a> | 
-    <a href="/cookie">Cookie Policy</a> */}
-    </p>
+  <p>© 2025 Step Solutions Co., Ltd. All Rights Reserved. | <a href="/privacy">Privacy Policy</a> | <a href="/cookie">Cookie Policy</a></p>
   <button className="line-contact-btn">
     <a href="https://line.me/R/ti/p/@esv1182i" target="_blank" rel="noopener noreferrer">สอบถาม - สั่งซื้อ ผ่าน @LINE สะดวกกว่า</a>
   </button>

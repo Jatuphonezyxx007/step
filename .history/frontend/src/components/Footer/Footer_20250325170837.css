@@ -112,11 +112,6 @@ footer a {
   text-decoration: none; /* ลบเส้นใต้ */
 }
 
-footer a:hover {
-  color: #ffffff; /* สีฟ้าอ่อน */
-  text-decoration: none; /* ลบเส้นใต้ */
-}
-
 .line-contact-btn a {
   color: white; /* เปลี่ยนสีตัวหนังสือในลิงก์เป็นสีขาว */
   text-decoration: none; /* ลบเส้นใต้ในลิงก์ */

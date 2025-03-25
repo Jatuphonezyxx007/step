@@ -108,16 +108,19 @@
 }
 
 footer a {
-  color: #d1d5db; /* สีฟ้าอ่อน */
+  color: #fcfcfc; /* สีฟ้าอ่อน */
   text-decoration: none; /* ลบเส้นใต้ */
 }
 
 footer a:hover {
-  color: #ffffff; /* สีฟ้าอ่อน */
-  text-decoration: none; /* ลบเส้นใต้ */
+  color: #34a1cc; /* สีฟ้าอ่อนเมื่อเอาเมาส์ไป hover */
 }
 
 .line-contact-btn a {
   color: white; /* เปลี่ยนสีตัวหนังสือในลิงก์เป็นสีขาว */
   text-decoration: none; /* ลบเส้นใต้ในลิงก์ */
 }
+
+/* .line-contact-btn:hover {
+  background-color: #0056b3;
+} */

@@ -1,7 +1,27 @@
+// import React from "react";
+// import "./Footer.css"; // Import ไฟล์ CSS
+
+// const Footer = () => {
+//   return (
+//     <footer>
+//       <div>
+//         <p>&copy; 2025 Your Company Name. All rights reserved.</p>
+//       </div>
+//       <div>
+//         <a href="/privacy-policy">Privacy Policy</a>
+//         {" | "}
+//         <a href="/terms-of-service">Terms of Service</a>
+//       </div>
+//     </footer>
+//   );
+// };
+
+// export default Footer;
 // src/components/Footer/Footer.jsx
 import React from 'react';
 import './Footer.css';
 import { FaFacebookF, FaInstagram, FaLine, FaLinkedinIn, FaYoutube, FaMapMarkerAlt } from 'react-icons/fa';
+import Standard from '../../assets/iso-9001.webp';
 
 export default function Footer() {
   return (
@@ -40,18 +60,17 @@ export default function Footer() {
           <p><strong>เวลาทำการ:</strong> จันทร์ – ศุกร์ 8.30 น. – 17.30 น.</p>
           <p><strong>Email:</strong> sales@step-solutions.com</p>
           <div className="footer-social">
-            <FaFacebookF />
-            <FaInstagram />
-            <FaLine />
-            <FaLinkedinIn />
-            <FaYoutube />
+            <a href="https://www.facebook.com/step.solutions.company" target="_blank" rel="noopener noreferrer"><FaFacebookF /></a>
+            <a href="https://www.instagram.com/step.solutions/" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+            <a href="https://line.me/R/ti/p/@esv1182i" target="_blank" rel="noopener noreferrer"><FaLine /></a>
+            <a href="https://www.linkedin.com/company/step-solutions-th" target="_blank" rel="noopener noreferrer"><FaLinkedinIn /></a>
+            <a href="http://www.youtube.com/@stepsolutions5859" target="_blank" rel="noopener noreferrer"><FaYoutube /></a> 
             <FaMapMarkerAlt />
           </div>
         </div>
 
         <div className="footer-section certification">
-          <img src="https://via.placeholder.com/300x150?text=ISO+9001" alt="ISO 9001" className="certification-img" />
-          <img src="https://via.placeholder.com/300x150?text=UKAS+0063" alt="UKAS 0063" className="certification-img" />
+          <img src={Standard} alt="ISO 9001" className="certification-img" />
         </div>
       </div>
 

@@ -108,12 +108,7 @@
 }
 
 footer a {
-  color: #d1d5db; /* สีฟ้าอ่อน */
-  text-decoration: none; /* ลบเส้นใต้ */
-}
-
-footer a:hover {
-  color: #ffffff; /* สีฟ้าอ่อน */
+  color: #fcfcfc; /* สีฟ้าอ่อน */
   text-decoration: none; /* ลบเส้นใต้ */
 }
 
