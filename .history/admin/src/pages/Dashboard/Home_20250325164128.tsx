@@ -307,7 +307,7 @@ interface HomeProps {
 export default function Home({ searchQuery }: HomeProps) {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 15;
   const navigate = useNavigate();
 
   useEffect(() => {

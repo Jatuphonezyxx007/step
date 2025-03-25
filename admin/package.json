@@ -17,6 +17,7 @@
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "@heroui/card": "^2.2.13",
+    "@heroui/pagination": "^2.2.14",
     "@heroui/react": "^2.7.2",
     "@react-jvectormap/core": "^1.0.4",
     "@react-jvectormap/world": "^1.1.2",

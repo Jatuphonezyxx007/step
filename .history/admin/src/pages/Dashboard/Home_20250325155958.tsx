@@ -228,7 +228,6 @@
 // import { useNavigate } from "react-router-dom";
 // import PageMeta from "../../components/common/PageMeta";
 // import Card from "../../components/common/Card";
-// import {Pagination} from "@heroui/react";
 
 // interface HomeProps {
 //   searchQuery: string; // ✅ รับค่าค้นหาจาก AppHeader
@@ -287,9 +286,6 @@
 // ) : (
 //   <p className="col-span-12 text-center text-gray-500">ไม่พบสินค้าตามคำค้นหา</p>
 // )}
-
-// <Pagination initialPage={1} total={10} />;
-
 //       </div>
 //     </>
 //   );
@@ -298,32 +294,35 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageMeta from "../../components/common/PageMeta";
 import Card from "../../components/common/Card";
-import "./home.css";
 
 interface HomeProps {
-  searchQuery: string;
+  searchQuery: string; // ✅ รับค่าค้นหาจาก AppHeader
 }
 
 export default function Home({ searchQuery }: HomeProps) {
-  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const [totalProducts, setTotalProducts] = useState(0);
+  const productsPerPage = 15;
   const navigate = useNavigate();
 
+  // ✅ ค้นหาสินค้าแบบ Live Search หรือแสดงสินค้าทั้งหมด
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const url = searchQuery.trim()
-          ? `http://localhost:3000/api/products/search?query=${searchQuery}`
-          : `http://localhost:3000/api/products`;
+          ? `http://localhost:3000/api/products/search?query=${searchQuery}&page=${currentPage}&limit=${productsPerPage}`
+          : `http://localhost:3000/api/products?page=${currentPage}&limit=${productsPerPage}`;
 
         const response = await fetch(url);
         const data = await response.json();
 
         if (data.success) {
-          setAllProducts(data.products);
+          setProducts(data.products);
+          setTotalProducts(data.total || data.products.length);
         } else {
-          setAllProducts([]);
+          setProducts([]);
+          setTotalProducts(0);
         }
       } catch (err) {
         console.error("Error fetching products:", err);
@@ -331,17 +330,14 @@ export default function Home({ searchQuery }: HomeProps) {
     };
 
     fetchProducts();
-  }, [searchQuery]);
+  }, [searchQuery, currentPage]); // ✅ อัปเดตทุกครั้งที่พิมพ์หรือเปลี่ยนหน้า
 
-  // Calculate pagination
-  const totalPages = Math.ceil(allProducts.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = allProducts.slice(startIndex, endIndex);
+  // คำนวณจำนวนหน้าทั้งหมด
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
 
+  // เปลี่ยนหน้า
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -349,8 +345,8 @@ export default function Home({ searchQuery }: HomeProps) {
       <PageMeta title="Step Solution" description="" />
 
       <div className="grid grid-cols-12 gap-3 md:gap-6 items-stretch mt-4 rounded-2xl">
-        {currentProducts.length > 0 ? (
-          currentProducts.map((product, index) => (
+        {products.length > 0 ? (
+          products.map((product, index) => (
             <div
               key={`${product.product_id}-${index}`}
               className="col-span-12 md:col-span-3 cursor-pointer"
@@ -370,33 +366,39 @@ export default function Home({ searchQuery }: HomeProps) {
         )}
       </div>
 
-      {allProducts.length > itemsPerPage && (
-        <div className="pagination-container">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="pagination-arrow"
-          >
-            &lt;
-          </button>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-8">
+          <nav className="flex items-center gap-2">
+            {/* ปุ่มย้อนกลับ */}
             <button
-              key={page}
-              onClick={() => handlePageChange(page)}
-              className={`pagination-item ${currentPage === page ? "active" : ""}`}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-md border border-gray-300 disabled:opacity-50"
             >
-              {page}
+              &lt;
             </button>
-          ))}
-          
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="pagination-arrow"
-          >
-            &gt;
-          </button>
+
+            {/* ปุ่มเลขหน้า */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-1 rounded-md border ${currentPage === page ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300'}`}
+              >
+                {page}
+              </button>
+            ))}
+
+            {/* ปุ่มไปข้างหน้า */}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-md border border-gray-300 disabled:opacity-50"
+            >
+              &gt;
+            </button>
+          </nav>
         </div>
       )}
     </>
