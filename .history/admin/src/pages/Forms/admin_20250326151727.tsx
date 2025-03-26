@@ -1276,7 +1276,6 @@ export default function ProductForm() {
                       )}
                     </span>
                   </div>
-                  <br />
                 </div>
               </div>
             </div>

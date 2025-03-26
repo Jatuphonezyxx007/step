@@ -1070,8 +1070,6 @@ export default function ProductForm() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [passwordMismatch, setPasswordMismatch] = useState(false);
-
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1104,13 +1102,10 @@ export default function ProductForm() {
     }
   
     if (password !== confirmPassword) {
-      setPasswordMismatch(true);
-      setError(null); // ซ่อน error กลางหน้า
+      setError("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
       return;
-    } else {
-      setPasswordMismatch(false);
     }
-      
+  
     if (phoneNumber.length !== 10) {
       setError("หมายเลขโทรศัพท์ต้องมี 10 หลัก");
       return;
@@ -1276,7 +1271,6 @@ export default function ProductForm() {
                       )}
                     </span>
                   </div>
-                  <br />
                 </div>
               </div>
             </div>

@@ -1258,25 +1258,39 @@ export default function ProductForm() {
                   </div>
 
                   <div className="relative">
-                    <Input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="ยืนยันรหัสผ่าน"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pr-10"
-                    />
-                    <span
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeSlashIcon className="h-5 w-5 text-gray-500" />
-                      ) : (
-                        <EyeIcon className="h-5 w-5 text-gray-500" />
-                      )}
-                    </span>
-                  </div>
-                  <br />
+  <Input
+    type={showConfirmPassword ? "text" : "password"}
+    placeholder="ยืนยันรหัสผ่าน"
+    value={confirmPassword}
+    onChange={(e) => {
+      setConfirmPassword(e.target.value);
+      if (password !== e.target.value) {
+        setPasswordMismatch(true);
+      } else {
+        setPasswordMismatch(false);
+      }
+    }}
+    className={`pr-10 ${passwordMismatch ? 'border-red-500' : ''}`}
+  />
+  <span
+    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+  >
+    {showConfirmPassword ? (
+      <EyeSlashIcon className="h-5 w-5 text-gray-500" />
+    ) : (
+      <EyeIcon className="h-5 w-5 text-gray-500" />
+    )}
+  </span>
+  {passwordMismatch && (
+    <p className="mt-1 flex items-center text-sm text-red-600">
+      <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+      </svg>
+      รหัสผ่านไม่ตรงกัน
+    </p>
+  )}
+</div>
                 </div>
               </div>
             </div>
