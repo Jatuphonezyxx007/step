@@ -251,7 +251,6 @@ export default function AdminTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  
 // ใน BasicTableOne.tsx
 useEffect(() => {
   const fetchAdmins = async () => {
@@ -286,13 +285,6 @@ useEffect(() => {
   fetchAdmins();
 }, []);
 
-const formatPhoneNumber = (phone) => {
-  if (!phone) return "";
-  const cleaned = phone.replace(/\D/g, ""); // ลบทุกอย่างที่ไม่ใช่ตัวเลข
-  const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-  return match ? `${match[1]}-${match[2]}-${match[3]}` : phone;
-};
-
 
   if (loading) {
     return (
@@ -324,16 +316,16 @@ const formatPhoneNumber = (phone) => {
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  พนักงาน
+                  Admin
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  ตำแหน่ง
+                  Position
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  เบอร์โทรศัพท์
+                  Contact
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  ชื่อผู้ใช้
+                  Username
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Status
@@ -362,25 +354,18 @@ const formatPhoneNumber = (phone) => {
                         <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {admin.admin_name} {admin.admin_lastname}
                         </span>
-                        <a
-                        href={`mailto:${admin.admin_email}`}
-                        className="block text-blue-500 text-theme-xs dark:text-blue-400 hover:underline">
+                        <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
                           {admin.admin_email}
-                          </a>
-
+                        </span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {admin.admin_position}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-start text-theme-sm">
-                    <a
-                    href={`tel:${admin.admin_phone}`}
-                    className="text-blue-500 dark:text-blue-400 hover:underline"
-                    >{formatPhoneNumber(admin.admin_phone)}
-                    </a>
-                    </TableCell>
+                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                    {admin.admin_phone}
+                  </TableCell>
                   <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                     {admin.admin_user}
                   </TableCell>

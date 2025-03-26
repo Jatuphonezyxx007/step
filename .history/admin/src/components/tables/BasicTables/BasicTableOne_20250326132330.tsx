@@ -330,10 +330,10 @@ const formatPhoneNumber = (phone) => {
                   ตำแหน่ง
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  เบอร์โทรศัพท์
+                  ชื่อผู้ใช้
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
-                  ชื่อผู้ใช้
+                  อีเมล์
                 </TableCell>
                 <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Status
@@ -362,11 +362,15 @@ const formatPhoneNumber = (phone) => {
                         <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
                           {admin.admin_name} {admin.admin_lastname}
                         </span>
-                        <a
-                        href={`mailto:${admin.admin_email}`}
-                        className="block text-blue-500 text-theme-xs dark:text-blue-400 hover:underline">
+                        {/* <span className="block text-gray-500 text-theme-xs dark:text-gray-400">
                           {admin.admin_email}
-                          </a>
+                        </span> */}
+<a
+  href={`mailto:${admin.admin_email}`}
+  className="block text-blue-500 text-theme-xs dark:text-blue-400 hover:underline"
+>
+  {admin.admin_email}
+</a>
 
                       </div>
                     </div>

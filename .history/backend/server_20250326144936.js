@@ -932,8 +932,6 @@ app.get('/api/admins', async (req, res) => {
 });
 
 
-
-
 // ตั้งค่า Multer สำหรับอัปโหลดรูปภาพผู้ใช้
 const userImageStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -945,6 +943,7 @@ const userImageStorage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // ชื่อไฟล์จะถูกตั้งเป็น admin_id.นามสกุล หลังจากบันทึกข้อมูลแล้ว
+    // ดังนั้นตอนนี้ให้ใช้ชื่อชั่วคราวก่อน
     const tempFilename = `temp_${Date.now()}${path.extname(file.originalname)}`;
     cb(null, tempFilename);
   },
@@ -966,7 +965,6 @@ const uploadUserImage = multer({
 // API สำหรับเพิ่มผู้ดูแลระบบใหม่
 app.post("/api/admin/add", uploadUserImage.single("admin_img"), async (req, res) => {
   try {
-    // ใช้ express.json() ไม่สามารถอ่าน FormData ได้ ต้องใช้ req.body โดยตรง
     const {
       admin_name,
       admin_lastname,
@@ -979,18 +977,11 @@ app.post("/api/admin/add", uploadUserImage.single("admin_img"), async (req, res)
 
     // ตรวจสอบข้อมูลที่จำเป็น
     if (!admin_name || !admin_lastname || !admin_phone || !admin_email || !admin_user || !admin_pwd || !admin_position) {
-      // ลบไฟล์ชั่วคราวถ้ามี
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
       return res.status(400).json({ success: false, message: "กรุณากรอกข้อมูลให้ครบทุกช่อง" });
     }
 
     // ตรวจสอบความยาวเบอร์โทรศัพท์
     if (admin_phone.length !== 10) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
       return res.status(400).json({ success: false, message: "หมายเลขโทรศัพท์ต้องมี 10 หลัก" });
     }
 
@@ -1001,9 +992,6 @@ app.post("/api/admin/add", uploadUserImage.single("admin_img"), async (req, res)
     );
 
     if (existingUser.length > 0) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
       return res.status(400).json({ success: false, message: "ชื่อผู้ใช้งานนี้มีอยู่แล้ว" });
     }
 
@@ -1048,22 +1036,16 @@ app.post("/api/admin/add", uploadUserImage.single("admin_img"), async (req, res)
       });
     } catch (error) {
       await connection.rollback();
-      // ลบไฟล์ถ้ามีและเกิดข้อผิดพลาด
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
       throw error;
     } finally {
       connection.release();
     }
   } catch (error) {
     console.error("🚨 Error adding admin:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || "เกิดข้อผิดพลาดในการเพิ่มผู้ดูแลระบบ" 
-    });
+    res.status(500).json({ success: false, message: error.message || "เกิดข้อผิดพลาดในการเพิ่มผู้ดูแลระบบ" });
   }
 });
+
 
 
 app.listen(port, () => {

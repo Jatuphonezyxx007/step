@@ -624,23 +624,12 @@ export default function SignInForm({ onLogin = () => {} }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
-                {/* <span
+                <span
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
                 >
                   {showPassword ? "🔓" : "🔒"}
-                </span> */}
-                <span
-  onClick={() => setShowPassword(!showPassword)}
-  className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer"
->
-  {showPassword ? (
-    <EyeSlashIcon className="h-5 w-5 text-gray-500" />
-  ) : (
-    <EyeIcon className="h-5 w-5 text-gray-500" />
-  )}
-</span>
-
+                </span>
               </div>
             </div>
             <div>

@@ -1094,23 +1094,23 @@ export default function ProductForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-  
+
     // ตรวจสอบความถูกต้องของข้อมูล
     if (!firstName || !lastName || !phoneNumber || !email || !username || !password || !confirmPassword || !position) {
       setError("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
-  
+
     if (password !== confirmPassword) {
       setError("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
       return;
     }
-  
+
     if (phoneNumber.length !== 10) {
       setError("หมายเลขโทรศัพท์ต้องมี 10 หลัก");
       return;
     }
-  
+
     try {
       const formData = new FormData();
       formData.append("admin_name", firstName);
@@ -1124,30 +1124,26 @@ export default function ProductForm() {
       if (selectedImageFile) {
         formData.append("admin_img", selectedImageFile);
       }
-  
-      // แก้ไข URL ให้ตรงกับเซิร์ฟเวอร์
-      const response = await fetch("http://localhost:3000/api/admin/add", {
+
+      const response = await fetch("/api/admin/add", {
         method: "POST",
         body: formData,
-        // ไม่ต้องกำหนด Content-Type สำหรับ FormData จะถูกตั้งโดยอัตโนมัติ
       });
-  
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-      }
-  
+
       const data = await response.json();
-  
+
+      if (!response.ok) {
+        throw new Error(data.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      }
+
       // บันทึกสำเร็จ
       alert("บันทึกข้อมูลพนักงานเรียบร้อยแล้ว");
-      navigate("/all-admin"); // เปลี่ยนเส้นทางไปยังหน้ารายการพนักงาน
+      navigate("/admin/admins"); // เปลี่ยนเส้นทางไปยังหน้ารายการพนักงาน
     } catch (err) {
       setError(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       console.error("Error submitting form:", err);
     }
   };
-
 
   return (
     <div>

@@ -1141,14 +1141,14 @@ export default function ProductForm() {
   
       // บันทึกสำเร็จ
       alert("บันทึกข้อมูลพนักงานเรียบร้อยแล้ว");
-      navigate("/all-admin"); // เปลี่ยนเส้นทางไปยังหน้ารายการพนักงาน
+      navigate("/admin/admins"); // เปลี่ยนเส้นทางไปยังหน้ารายการพนักงาน
     } catch (err) {
       setError(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       console.error("Error submitting form:", err);
     }
   };
 
-
+  
   return (
     <div>
       <PageMeta title="การจัดการผู้ใช้ | Step Solutions" description="ฟอร์มเพิ่มสินค้า" />

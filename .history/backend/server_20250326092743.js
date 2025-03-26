@@ -8,9 +8,10 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const bodyParser = require("body-parser");
+// const app = express();
 const port = process.env.PORT || 3000; // ใช้ค่าจาก .env หากมี
-const app = express();
 
+const app = express();
 app.use(bodyParser.json({ limit: "50mb" })); // ✅ เพิ่มขนาด JSON สูงสุด
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
@@ -24,7 +25,6 @@ app.use('/3d', express.static(path.join(__dirname, '../admin/public/products_3d'
 app.use('/images/user', express.static(path.join(__dirname, '../admin/public/images/user')));
 // ให้บริการไฟล์ static สำหรับรูปรายละเอียดสินค้า
 app.use('/products-detail', express.static(path.join(__dirname, '../admin/public/products_detail')));
-
 
 
 const tempFilenames = {}; // ใช้เก็บ filename ชั่วคราวสำหรับแต่ละ product_id
@@ -41,20 +41,8 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-// ใน server.js
-// ใน server.js ให้แก้ไข CORS middleware เป็นแบบนี้:
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 
-// เพิ่มก่อน routes ทั้งหมด
-app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
-  next();
-});
+
 
 // ตั้งค่าการเก็บไฟล์ 3D
 const storage3d = multer.memoryStorage({
@@ -894,10 +882,10 @@ app.delete("/api/delete-image", async (req, res) => {
 
 
 
-// ใน server.js แก้ไข endpoint เป็นแบบนี้:
+// API: ดึงข้อมูลผู้ดูแลระบบทั้งหมด
 app.get('/api/admins', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const query = `
       SELECT 
         admin_id,
         admin_name,
@@ -909,161 +897,24 @@ app.get('/api/admins', async (req, res) => {
         admin_img
       FROM admin
       ORDER BY admin_id ASC
-    `);
+    `;
+    const [rows] = await pool.query(query);
     
-    const admins = rows.map(admin => ({
+    // เพิ่ม URL สำหรับรูปภาพ
+    const adminsWithImageUrl = rows.map(admin => ({
       ...admin,
       admin_img: admin.admin_img 
-        ? `/images/user/${admin.admin_img.replace(/^\//, '')}`
+        ? `../admin/public/images/user${admin.admin_img}`
         : '/images/user/default-avatar.png'
     }));
-    
-    // ตรวจสอบการส่ง response
-    console.log('Sending admins data:', admins);
-    res.status(200).json({ success: true, admins });
+
+    res.status(200).json({ success: true, admins: adminsWithImageUrl });
   } catch (error) {
-    console.error('Error fetching admins:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching admin data',
-      error: error.message
-    });
+    console.error("❌ Error fetching admins:", error);
+    res.status(500).json({ success: false, message: "Error fetching admins", error: error.message });
   }
 });
 
-
-
-
-// ตั้งค่า Multer สำหรับอัปโหลดรูปภาพผู้ใช้
-const userImageStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../admin/public/images/user");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    // ชื่อไฟล์จะถูกตั้งเป็น admin_id.นามสกุล หลังจากบันทึกข้อมูลแล้ว
-    const tempFilename = `temp_${Date.now()}${path.extname(file.originalname)}`;
-    cb(null, tempFilename);
-  },
-});
-
-const uploadUserImage = multer({
-  storage: userImageStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // จำกัดขนาด 5MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [".jpg", ".jpeg", ".png", ".gif"];
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!allowedTypes.includes(ext)) {
-      return cb(new Error("❌ Only image files are allowed"), false);
-    }
-    cb(null, true);
-  },
-});
-
-// API สำหรับเพิ่มผู้ดูแลระบบใหม่
-app.post("/api/admin/add", uploadUserImage.single("admin_img"), async (req, res) => {
-  try {
-    // ใช้ express.json() ไม่สามารถอ่าน FormData ได้ ต้องใช้ req.body โดยตรง
-    const {
-      admin_name,
-      admin_lastname,
-      admin_phone,
-      admin_email,
-      admin_user,
-      admin_pwd,
-      admin_position,
-    } = req.body;
-
-    // ตรวจสอบข้อมูลที่จำเป็น
-    if (!admin_name || !admin_lastname || !admin_phone || !admin_email || !admin_user || !admin_pwd || !admin_position) {
-      // ลบไฟล์ชั่วคราวถ้ามี
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
-      return res.status(400).json({ success: false, message: "กรุณากรอกข้อมูลให้ครบทุกช่อง" });
-    }
-
-    // ตรวจสอบความยาวเบอร์โทรศัพท์
-    if (admin_phone.length !== 10) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
-      return res.status(400).json({ success: false, message: "หมายเลขโทรศัพท์ต้องมี 10 หลัก" });
-    }
-
-    // ตรวจสอบว่ามีชื่อผู้ใช้ซ้ำหรือไม่
-    const [existingUser] = await pool.query(
-      "SELECT admin_id FROM admin WHERE admin_user = ?",
-      [admin_user]
-    );
-
-    if (existingUser.length > 0) {
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
-      return res.status(400).json({ success: false, message: "ชื่อผู้ใช้งานนี้มีอยู่แล้ว" });
-    }
-
-    // Hash รหัสผ่านด้วย argon2
-    const hashedPassword = await argon2.hash(admin_pwd);
-
-    const connection = await pool.getConnection();
-    await connection.beginTransaction();
-
-    try {
-      // เพิ่มข้อมูลผู้ดูแลระบบ
-      const [result] = await connection.query(
-        "INSERT INTO admin (admin_name, admin_lastname, admin_phone, admin_email, admin_user, admin_pwd, admin_position) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [admin_name, admin_lastname, admin_phone, admin_email, admin_user, hashedPassword, admin_position]
-      );
-
-      const adminId = result.insertId;
-
-      // ถ้ามีการอัปโหลดรูปภาพ
-      let imageFilename = null;
-      if (req.file) {
-        const fileExt = path.extname(req.file.originalname);
-        imageFilename = `${adminId}${fileExt}`;
-        const newPath = path.join(__dirname, "../admin/public/images/user", imageFilename);
-
-        // เปลี่ยนชื่อไฟล์จาก temp เป็น admin_id.นามสกุล
-        fs.renameSync(req.file.path, newPath);
-
-        // อัปเดตชื่อไฟล์ในฐานข้อมูล
-        await connection.query(
-          "UPDATE admin SET admin_img = ? WHERE admin_id = ?",
-          [imageFilename, adminId]
-        );
-      }
-
-      await connection.commit();
-
-      res.status(201).json({
-        success: true,
-        message: "เพิ่มผู้ดูแลระบบเรียบร้อยแล้ว",
-        adminId,
-      });
-    } catch (error) {
-      await connection.rollback();
-      // ลบไฟล์ถ้ามีและเกิดข้อผิดพลาด
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
-      throw error;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error("🚨 Error adding admin:", error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || "เกิดข้อผิดพลาดในการเพิ่มผู้ดูแลระบบ" 
-    });
-  }
-});
 
 
 app.listen(port, () => {
